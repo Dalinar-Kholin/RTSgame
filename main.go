@@ -49,7 +49,7 @@ func main() {
 	var socketPool atomic.Int32
 	socketPool.Add(0)
 
-	r.GET("/socketOne", func(c *gin.Context) {
+	/*r.GET("/socketOne", func(c *gin.Context) {
 		i := 0
 		socketPool.Add(1)
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -75,33 +75,44 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	})
+	*/
 	r.GET("/socketTwo", func(c *gin.Context) {
 		socketPool.Add(1)
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			return
 		}
-		defer func() {
-			conn.Close()
-			socketPool.Add(-1)
+		// jeden wątek chce słuchać
+		go func() {
+			defer func() {
+				conn.Close()
+				socketPool.Add(-1)
+			}()
+			for {
+				_, data, err := conn.ReadMessage()
+				if err != nil {
+					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+						fmt.Printf("connection is Closed")
+						return
+					}
+					fmt.Printf("error := %v\n", err.Error())
+					return
+				}
+				fmt.Printf("data := %v\n", data)
+			}
+		}()
+		go func() {
+			packetNumber := 0
+			for {
+				propData := Chuj{Id: packetNumber, Len: 5, Name: "essa"}
+				conn.WriteMessage(websocket.BinaryMessage, propData.toUint8())
+				time.Sleep(time.Second)
+			}
 		}()
 
-		propData := Chuj{Id: 1069, Len: 5, Name: "essa"}
-		_ = propData
-		conn.WriteMessage(websocket.BinaryMessage, propData.toUint8())
-		resType, data, err := conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				fmt.Printf("connection is Closed")
-				return
-			}
-			fmt.Printf("error := %v\n", err.Error())
-			return
-		}
-		if resType != websocket.TextMessage {
-			panic(fmt.Sprintf("chuj %v", resType))
-		}
-		fmt.Printf("data := %s", data)
+		// drugi wątek chce nadawać
+		// dlaczego nie można razem -> słuchanie jest blokujące + wysyłanie jest asynchroniczne
+
 	})
 
 	api := r.Group("/api")
@@ -118,5 +129,5 @@ func main() {
 		})
 	}
 
-	r.Run("127.0.0.1:80")
+	r.Run("essa.com:80")
 }
