@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"sync/atomic"
 	"time"
+	"weppoProjec/connectionHub"
 )
 
 var upgrader = websocket.Upgrader{
@@ -76,6 +77,16 @@ func main() {
 		}
 	})
 	*/
+
+	r.GET("/commSocket", func(c *gin.Context) {
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			fmt.Printf("error in making connection with socket := %v\n", err.Error())
+			return
+		}
+		connectionHub.Hub.RegisterNewConnection(conn, c.Request.URL.Query().Get("id"))
+	})
+
 	r.GET("/socketTwo", func(c *gin.Context) {
 		socketPool.Add(1)
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
