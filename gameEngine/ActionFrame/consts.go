@@ -6,7 +6,7 @@ const (
 	Empty   = Action(0)
 	Message = Action(1)
 	Attack  = Action(2)
-	Build   = Action(4)
+	Build   = Action(3)
 )
 
 type IActionRequest interface {
