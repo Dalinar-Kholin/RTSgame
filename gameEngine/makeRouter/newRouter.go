@@ -80,7 +80,7 @@ func NewRouter() *gin.Engine {
 			conn.Close()
 			return
 		}
-		connectionHub.Hub.RegisterNewConnection(conn, uint32(id))
+		connectionHub.Hub.RegisterNewConnection(conn, int32(id))
 	})
 
 	r.GET("/newGame", gameEndpoint.NewGame)
