@@ -1,15 +1,13 @@
-import MessageReceived from "./NotificationType/Messages/MessageReceived.ts";
-import MessageSent from "./NotificationType/Messages/messageSent.ts";
+import MessageReceivedEvent from "./NotificationType/Messages/MessageReceived.ts";
+import MessageSentEvent from "./NotificationType/Messages/messageSent.ts";
+import AttackEvent from "./NotificationType/attackEvent.ts";
 
 export interface ISubscribe {
     Handle: (notification: EventTypes) => void
 }
 
-export type EventTypes = MessageReceived | MessageSent
+export type EventTypes = MessageReceivedEvent | MessageSentEvent | AttackEvent
 
-export interface IEventAggregatorSubscriber{
-    type: string
-}
 
 export default class EventAggregatorClass{
     static #instance: EventAggregatorClass;
@@ -28,6 +26,7 @@ export default class EventAggregatorClass{
     }
 
     public registerSubscriber(eventType: EventTypes,subscriber : ISubscribe){
+
         if (!this._subscribers.has(eventType.type)){
             this._subscribers.set(eventType.type, [])
         }
@@ -52,6 +51,7 @@ export default class EventAggregatorClass{
     }
 
     public notify(notify: EventTypes/*powiadominie typu buildingAttacked*/){
+        console.log(`notification sent ${typeof notify}` )
         if(this._subscribers.has(notify.type)){
             this._subscribers.get(notify.type)?.map((fn) => {
                 fn.Handle(notify)

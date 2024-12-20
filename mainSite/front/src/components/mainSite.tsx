@@ -1,5 +1,4 @@
 import {gameServerURL} from "../consts.ts";
-import WaitingRoom from "../components/gameWaitingRoom/waitingRoom.tsx";
 import {useEffect, useState} from "react";
 import {Button} from "@mui/material";
 import {DataMessageFrame, packageDataFrame} from "../communicationType/frames/dataMessageFrame.ts";
@@ -59,7 +58,6 @@ export default function MainSite() {
 
             <p>gameID := {gameId}</p>
             <p></p>
-            <WaitingRoom />
             <p></p>
             <Button onClick={ () => refreshRoom((d)=>{setGamesToJoin(d)})}>refresh Games</Button>
             <Button onClick={() => {
@@ -100,7 +98,6 @@ export default function MainSite() {
                     </Button>
                 )
             }) : <></> }
-            essa
         </>
     )
 }

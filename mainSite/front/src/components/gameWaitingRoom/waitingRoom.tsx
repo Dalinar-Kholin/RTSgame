@@ -30,10 +30,10 @@ class gameWaitingRoom{
 export default function GameWaitingRoom(){
     const [chatHistory, setChatHistory] = useState<string[]>([])
 
-    const historyHandlerClass = new gameWaitingRoom( (message: string) => {
-        setChatHistory([...chatHistory, message])
-    })
     useEffect(() => {
+        const historyHandlerClass: gameWaitingRoom = new gameWaitingRoom( (message: string) => {
+            setChatHistory(prevHistory => [...prevHistory, message])
+        })
         return ()=>{
             EventAggregatorClass.instance.unSubscribe(new MessageReceived(""),historyHandlerClass)
             EventAggregatorClass.instance.unSubscribe(new MessageSent(""),historyHandlerClass)

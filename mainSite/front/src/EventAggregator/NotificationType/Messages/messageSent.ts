@@ -1,6 +1,4 @@
-import {IEventAggregatorSubscriber} from "../../EventAggregatorClass.ts";
-
-export default class MessageSent implements IEventAggregatorSubscriber {
+export default class MessageSent {
     message: string
     type: string = "MessageSent"
     constructor(message: string) {

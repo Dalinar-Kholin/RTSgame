@@ -11,6 +11,8 @@ import {DataMessageFrame} from "./communicationType/frames/dataMessageFrame.ts";
 import EventAggregatorClass from "./EventAggregator/EventAggregatorClass.ts";
 import {v4 as uuidv4} from "uuid";
 import MessageSent from "./EventAggregator/NotificationType/Messages/messageSent.ts";
+import AttackDataFrame from "./communicationType/frames/attackDataFrame.ts";
+import AttackEvent from "./EventAggregator/NotificationType/attackEvent.ts";
 
 
 
@@ -41,7 +43,9 @@ export default function App() {
             let frame = Parser.instance.parse(new Uint8Array(e.data))
             if (frame instanceof DataMessageFrame){
                 EventAggregatorClass.instance.notify(new MessageSent(frame.message))
-            }
+            }else if (frame instanceof AttackDataFrame){
+                EventAggregatorClass.instance.notify(new AttackEvent(10, 11))
+            }/*dla każdej akcji odpowiednie powiadomienie*/
         }else{
             console.log("pogger\n")
         }
