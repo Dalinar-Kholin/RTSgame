@@ -1,27 +1,28 @@
 import {FrameType, FrameTypeEnumType} from "./frameTypeEnum.ts";
-import EmptyDataFrame from "./emptyDataFrame.ts";
 
-export default function ParseFrame(data: Uint8Array){
-    let parser: {parse: (data: Uint8Array)=> FrameType} = {
-        parse: (__arr )=> {
-            return EmptyDataFrame
+/*
+* jest singletonem aby ta funkcja nie była cały czas tworzona i usuwana w kółko 60 razy na sekundę
+* */
+
+export class Parser{
+    static #parser: Parser
+
+    private constructor(){
+    }
+
+    public static get instance(): Parser {
+        if (!Parser.#parser) {
+            Parser.#parser = new Parser();
         }
-    }
-    Object.setPrototypeOf(parser, parseDataPrototype);
 
-    parser.parse = function(this: typeof parseDataPrototype, arr: Uint8Array): FrameType {
-        let parseFunction = this.getParserFunc(arr[0])
-        return parseFunction(arr.subarray(1,arr.length))
+        return Parser.#parser;
     }
 
-    return parser.parse(data)
-}
+    public parse(arr: Uint8Array): FrameType {
+        const parseFunction = (this as any).getParserFunc(arr[0]);
+        return parseFunction(arr.subarray(1));
+    }
 
-
-interface ParseDataPrototype {
-    parseFunctionsArray: ((arr: Uint8Array) => FrameType)[];
-    getParserFunc(this: ParseDataPrototype, frameType: FrameTypeEnumType): (arr: Uint8Array) => FrameType;
-    setParserFunc(this: ParseDataPrototype, fn: (arr: Uint8Array) => FrameType, type: FrameTypeEnumType): void;
 }
 
 export let parseDataPrototype: ParseDataPrototype = {
@@ -34,5 +35,17 @@ export let parseDataPrototype: ParseDataPrototype = {
         this.parseFunctionsArray[type] = fn;
     }
 };
+
+Object.setPrototypeOf(Parser.prototype, parseDataPrototype);
+
+
+
+interface ParseDataPrototype {
+    parseFunctionsArray: ((arr: Uint8Array) => FrameType)[];
+    getParserFunc(this: ParseDataPrototype, frameType: FrameTypeEnumType): (arr: Uint8Array) => FrameType;
+    setParserFunc(this: ParseDataPrototype, fn: (arr: Uint8Array) => FrameType, type: FrameTypeEnumType): void;
+}
+
+
 
 

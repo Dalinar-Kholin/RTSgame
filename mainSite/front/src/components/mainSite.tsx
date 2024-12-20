@@ -1,23 +1,15 @@
 import {gameServerURL} from "../consts.ts";
 import WaitingRoom from "../components/gameWaitingRoom/waitingRoom.tsx";
 import {useEffect, useState} from "react";
-import { v4 as uuidv4 } from 'uuid';
 import {Button} from "@mui/material";
 import {DataMessageFrame, packageDataFrame} from "../communicationType/frames/dataMessageFrame.ts";
 import {useNavigate} from "react-router-dom";
+import {gameSocket, playerId} from "../App.tsx";
 
 
-let playerId= uuidToUint32();
-
-function uuidToUint32(): number {
-    const uuid = uuidv4(); // Generowanie UUID
-    const hexPart = uuid.replace(/-/g, '').slice(0, 8); // Pobierz pierwsze 8 znaków jako 32-bitowy fragment
-    return parseInt(hexPart, 16); // Konwersja na liczbę w systemie dziesiętnym
-}
 
 
-export let gameSocket: WebSocket =  new WebSocket("ws://" + gameServerURL +"/commSocket?id="+playerId)
-gameSocket.binaryType = 'arraybuffer';
+
 
 
 interface IGamesToJoin{
@@ -50,7 +42,7 @@ export default function MainSite() {
         r => {return r.json()}
     ).then(
         (r: IResultFromJoinToGame) => {
-            r.results !== null ?  setGames(r.results) : setGames([])
+            r.results?.length !== 0 ?  setGames(r.results) : setGames([])
         })
     }
 
@@ -66,7 +58,9 @@ export default function MainSite() {
         <>
 
             <p>gameID := {gameId}</p>
+            <p></p>
             <WaitingRoom />
+            <p></p>
             <Button onClick={ () => refreshRoom((d)=>{setGamesToJoin(d)})}>refresh Games</Button>
             <Button onClick={() => {
                 fetch("http://" + gameServerURL + "/newGame?playerId=" + playerId).then(res => {
