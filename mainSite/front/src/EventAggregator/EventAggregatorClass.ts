@@ -1,12 +1,9 @@
-import MessageReceivedEvent from "./NotificationType/Messages/MessageReceived.ts";
-import MessageSentEvent from "./NotificationType/Messages/messageSent.ts";
-import AttackEvent from "./NotificationType/attackEvent.ts";
+// niejawna implementacja interfacu type: string
+type EventTypes = "MessageReceivedEvent" | "MessageSentEvent" | "AttackEvent" // to musi być tylko enumerator
 
 export interface ISubscribe {
-    Handle: (notification: EventTypes) => void
+    Handle: (notification: object) => void
 }
-
-export type EventTypes = MessageReceivedEvent | MessageSentEvent | AttackEvent
 
 
 export default class EventAggregatorClass{
@@ -27,35 +24,38 @@ export default class EventAggregatorClass{
 
     public registerSubscriber(eventType: EventTypes,subscriber : ISubscribe){
 
-        if (!this._subscribers.has(eventType.type)){
-            this._subscribers.set(eventType.type, [])
+        if (!this._subscribers.has(eventType)){
+            this._subscribers.set(eventType, [])
         }
-        let arr: ISubscribe[] | undefined = this._subscribers.get(eventType.type)
+        let arr: ISubscribe[] | undefined = this._subscribers.get(eventType)
         if (arr===undefined){
             return
         }
-        this._subscribers.set(eventType.type, [...arr, subscriber])
+        this._subscribers.set(eventType, [...arr, subscriber])
 
     }
 
     public unSubscribe(eventType: EventTypes,subscriber : ISubscribe){
-        if (this._subscribers.has(eventType.type) && this._subscribers.get(eventType.type)?.length!==0 ){
-            let arr: ISubscribe[] | undefined = this._subscribers.get(eventType.type)
+        if (this._subscribers.has(eventType) && this._subscribers.get(eventType)?.length!==0 ){
+            let arr: ISubscribe[] | undefined = this._subscribers.get(eventType)
             if (arr===undefined){
                 return
             }
-            this._subscribers.set(eventType.type,arr.filter((data) => {
+            this._subscribers.set(eventType,arr.filter((data) => {
                 return data!==subscriber
             }))
         }
     }
 
-    public notify(notify: EventTypes/*powiadominie typu buildingAttacked*/){
-        console.log(`notification sent ${typeof notify}` )
-        if(this._subscribers.has(notify.type)){
-            this._subscribers.get(notify.type)?.map((fn) => {
-                fn.Handle(notify)
-            })
+    public notify(notify: EventTypes, obj: object){
+        console.log(`notification sent ${typeof notify}`)
+        const tab = this._subscribers.get(notify)
+        if (tab===undefined){
+            return
         }
+        for (let i = 0; i< tab.length; i++){ // for jest teoretycznie szybszy od mapa
+            tab[i].Handle(obj)
+        }
+
     }
 }

@@ -1,8 +1,6 @@
-export default class AttackEvent{
-    type: string = "AttackEvent"
+export default class AttackEventObject{
     attackerId:number
     victimId: number
-
 
     constructor(aId : number, vId: number) {
         this.attackerId = aId

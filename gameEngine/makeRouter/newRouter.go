@@ -134,5 +134,7 @@ func NewRouter() *gin.Engine {
 		})
 	})
 
+	r.GET("/leaveGame", gameEndpoint.LeaveGame)
+
 	return r
 }

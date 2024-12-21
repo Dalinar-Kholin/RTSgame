@@ -1,13 +1,13 @@
 import {useState} from "react";
-import {Button, TextField} from "@mui/material";
-import {DataMessageFrame, packageDataFrame} from "../../communicationType/frames/dataMessageFrame.ts";
-import {gameSocket} from "../../App.tsx";
+import {TextField} from "@mui/material";
+import EventAggregatorClass from "../../EventAggregator/EventAggregatorClass.ts";
+import MessageSentEventObject from "../../EventAggregator/NotificationType/Messages/messageSent.ts";
 
 export default function ChatComp(){
     const [message, setMessage] = useState("")
 
     const sendMessage = () => {
-        gameSocket.send(packageDataFrame(new DataMessageFrame(message)))
+        EventAggregatorClass.instance.notify("MessageSentEvent", new MessageSentEventObject(message))
         setMessage("")
     }
 
@@ -17,6 +17,5 @@ export default function ChatComp(){
         }} onKeyDown={(e)=>{
             if (e.key == "Enter"){sendMessage()}}}
         />
-        <Button onClick={sendMessage}>send Message</Button>
     </>
 }

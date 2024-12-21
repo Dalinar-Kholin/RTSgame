@@ -3,17 +3,17 @@ import './index.css'
 import MainSite from "./components/mainSite.tsx";
 import {Route, Routes} from "react-router-dom";
 import GameWaitingRoom from "./components/gameWaitingRoom/waitingRoom.tsx";
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import {gameServerURL} from "./consts.ts";
 import {Parser} from "./communicationType/frames/frameParser.ts";
 import {DataMessageFrame} from "./communicationType/frames/dataMessageFrame.ts";
-import EventAggregatorClass from "./EventAggregator/EventAggregatorClass.ts";
+import EventAggregatorClass, {ISubscribe} from "./EventAggregator/EventAggregatorClass.ts";
 import {v4 as uuidv4} from "uuid";
-import MessageSent from "./EventAggregator/NotificationType/Messages/messageSent.ts";
 import AttackDataFrame from "./communicationType/frames/attackDataFrame.ts";
 import AttackEvent from "./EventAggregator/NotificationType/attackEvent.ts";
-
+import MessageReceivedEventObject from "./EventAggregator/NotificationType/Messages/MessageReceived.ts";
+import MessageSentEventObject from "./EventAggregator/NotificationType/Messages/messageSent.ts";
 
 
 export let playerId= uuidToUint32();
@@ -36,35 +36,53 @@ gameSocket.binaryType = 'arraybuffer';
 
 export default function App() {
 
-
-    gameSocket.onmessage = (e)=>{// zastąpić to observerem
-        console.log(e)
-        if (e.data instanceof ArrayBuffer){
-            let frame = Parser.instance.parse(new Uint8Array(e.data))
-            if (frame instanceof DataMessageFrame){
-                EventAggregatorClass.instance.notify(new MessageSent(frame.message))
-            }else if (frame instanceof AttackDataFrame){
-                EventAggregatorClass.instance.notify(new AttackEvent(10, 11))
-            }/*dla każdej akcji odpowiednie powiadomienie*/
-        }else{
-            console.log("pogger\n")
-        }
-    }
+    const [gameId, setGameId] = useState<number>(0)
 
     useEffect(() => {
+        // register message sender notify for sending message to backend
+        let messageSender: ISubscribe = {
+            Handle: (notification: object): void => {
+                const notif  = (notification as MessageSentEventObject)
+                gameSocket.send(new DataMessageFrame(notif.message).packageDataFrame())
+            }
+        }
+
+        EventAggregatorClass.instance.registerSubscriber("MessageSentEvent", messageSender)
+
+        return ()=>{
+            EventAggregatorClass.instance.unSubscribe("MessageSentEvent", messageSender )
+        }
+
+    }, []);
+
+    useEffect(() => {
+        gameSocket.onmessage = (e)=>{// zastąpić to observerem
+            if (e.data instanceof ArrayBuffer){
+                let frame = Parser.instance.parse(new Uint8Array(e.data))
+                if (frame instanceof DataMessageFrame){
+                    EventAggregatorClass.instance.notify("MessageReceivedEvent", new MessageReceivedEventObject(frame.message))
+                }else if (frame instanceof AttackDataFrame){
+                    EventAggregatorClass.instance.notify("AttackEvent", new AttackEvent(10,11))
+                }/*dla każdej akcji odpowiednie powiadomienie*/
+            }else{
+                console.log("pogger\n")
+            }
+        }
         return ()=> {
             console.log("web socket closed")
             gameSocket.close()
         }
     }, []);
 
+    const setGameIdLambda = (id : number) => {setGameId(id)}
+
     return <>
         <ThemeProvider theme={darkTheme}>
             <CssBaseline/>
         <Routes>
-            <Route path={"/*"} element={<MainSite/>}/>
-            <Route path={"/mainSite"} element={<MainSite/>}/>
-            <Route path={"/gameWaitingRoom"} element={<GameWaitingRoom/>}/>
+            <Route path={"/*"} element={<MainSite setGameId={setGameIdLambda}/>}/>
+            <Route path={"/mainSite"} element={<MainSite setGameId={setGameIdLambda}/>}/>
+            <Route path={"/gameWaitingRoom"} element={<GameWaitingRoom gameId={gameId}/>}/>
         </Routes>
         </ThemeProvider>
     </>

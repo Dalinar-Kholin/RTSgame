@@ -1,6 +1,5 @@
-export default class MessageSent {
+export default class MessageSentEventObject {
     message: string
-    type: string = "MessageSent"
     constructor(message: string) {
         this.message = message
     }

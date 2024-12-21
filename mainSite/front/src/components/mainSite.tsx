@@ -1,53 +1,56 @@
 import {gameServerURL} from "../consts.ts";
 import {useEffect, useState} from "react";
 import {Button} from "@mui/material";
-import {DataMessageFrame, packageDataFrame} from "../communicationType/frames/dataMessageFrame.ts";
 import {useNavigate} from "react-router-dom";
-import {gameSocket, playerId} from "../App.tsx";
+import {playerId} from "../App.tsx";
+import EventAggregatorClass from "../EventAggregator/EventAggregatorClass.ts";
+import MessageSentEventObject from "../EventAggregator/NotificationType/Messages/messageSent.ts";
 
 
-
-
-
-
-
-interface IGamesToJoin{
-    FirstPlayerId : number,
-    GameId : number,
+interface IGamesToJoin {
+    FirstPlayerId: number,
+    GameId: number,
     SecondPlayerId: number
 }
 
-interface IResultFromJoinToGame{
+interface IResultFromJoinToGame {
     results: IGamesToJoin[]
 }
 
 
-
-interface newGame{
-    gameId : number,
+interface newGame {
+    gameId: number,
     playerId: number
 }
 
-export default function MainSite() {
-    const [gameId, setGameId] = useState("")
+interface IMainSite{
+    setGameId : (n : number) => void
+}
+
+export default function MainSite({setGameId}: IMainSite) {
     // Obsługa zdarzenia otwarcia połączenia
     const [gamesToJoin, setGamesToJoin] = useState<IGamesToJoin[]>([])
 
     const navigate = useNavigate()
 
-    const refreshRoom = (setGames : (i: IGamesToJoin[])=> void )=> {fetch("http://" + gameServerURL + "/gamesToJoin",{
-        method: "GET"
-    }).then(
-        r => {return r.json()}
-    ).then(
-        (r: IResultFromJoinToGame) => {
-            r.results?.length !== 0 ?  setGames(r.results) : setGames([])
-        })
+    const refreshRoom = (setGames: (i: IGamesToJoin[]) => void) => {
+        fetch("http://" + gameServerURL + "/gamesToJoin", {
+            method: "GET"
+        }).then(
+            r => {
+                return r.json()
+            }
+        ).then(
+            (r: IResultFromJoinToGame) => {
+                r.results?.length !== 0 ? setGames(r.results) : setGames([])
+            })
     }
 
 
     useEffect(() => {
-        refreshRoom((d)=>{setGamesToJoin(d)})
+        refreshRoom((d) => {
+            setGamesToJoin(d)
+        })
 
     }, []);
 
@@ -55,49 +58,51 @@ export default function MainSite() {
     console.log(gamesToJoin)
     return (
         <>
-
-            <p>gameID := {gameId}</p>
             <p></p>
-            <p></p>
-            <Button onClick={ () => refreshRoom((d)=>{setGamesToJoin(d)})}>refresh Games</Button>
+            <Button onClick={() => refreshRoom((d) => {
+                setGamesToJoin(d)
+            })}>refresh Games</Button>
             <Button onClick={() => {
                 fetch("http://" + gameServerURL + "/newGame?playerId=" + playerId).then(res => {
-                    if (res.status!== 200){
+                    if (res.status !== 200) {
                         throw new Error("bad make ne Game res")
                     }
                     return res.json()
                 }).then(
                     (data: newGame) => {
-                        console.log(""+data.gameId)
-                        setGameId(""+data.gameId)
-                        localStorage.setItem("gameId", ""+data.gameId)
+                        console.log("" + data.gameId)
+                        setGameId(data.gameId)
                         navigate("/gameWaitingRoom")
                     }
-
                 )
             }}>make new game</Button>
-            { gamesToJoin ? gamesToJoin.map(g => {
+            <br/>
+            {gamesToJoin ? gamesToJoin.map(g => {
                 return (
-                    <Button onClick={()=>{
-                        fetch(`http://${gameServerURL}/joinGames?gameId=${g.GameId}&playerId=${playerId}`).then(
-                            res => {
-                                if (res.status!==200){
-                                    throw new Error("chuj nie działa")
-                                }else{
-                                    gameSocket.send(packageDataFrame(new DataMessageFrame("player joins")))
-                                    navigate("/gameWaitingRoom")
+                    <>
+                        <Button onClick={() => {
+                            fetch(`http://${gameServerURL}/joinGames?gameId=${g.GameId}&playerId=${playerId}`).then(
+                                res => {
+                                    if (res.status !== 200) {
+                                        throw new Error("chuj nie działa")
+                                    } else {
+                                        EventAggregatorClass.instance.notify("MessageSentEvent", new MessageSentEventObject("player join"))
+                                        setGameId(g.GameId)
+                                        navigate("/gameWaitingRoom")
+                                    }
                                 }
-                            }
-                        )
-                    }}>
-                        <p>
-                            game := {g.GameId}
-                            opponent := {g.SecondPlayerId}
-                            ja := {g.FirstPlayerId}
-                        </p>
-                    </Button>
+                            )
+                        }}>
+                            <p>
+                                game := {g.GameId}
+                                opponent := {g.SecondPlayerId}
+                                ja := {g.FirstPlayerId}
+                            </p>
+                        </Button>
+                        <br/>
+                    </>
                 )
-            }) : <></> }
+            }) : <></>}
         </>
     )
 }

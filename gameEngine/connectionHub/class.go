@@ -7,6 +7,42 @@ import (
 	"sync/atomic"
 )
 
+/*
+
+
+func (basics TableBasics) UpdateMovie(ctx context.Context, movie Movie) (map[string]map[string]interface{}, error) {
+	var err error
+	var response *dynamodb.UpdateItemOutput
+	var attributeMap map[string]map[string]interface{}
+	update := expression.Set(expression.Name("info.rating"), expression.Value(movie.Info["rating"]))
+	update.Set(expression.Name("info.plot"), expression.Value(movie.Info["plot"]))
+	expr, err := expression.NewBuilder().WithUpdate(update).Build()
+	if err != nil {
+		log.Printf("Couldn't build expression for update. Here's why: %v\n", err)
+	} else {
+		response, err = basics.DynamoDbClient.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName:                 aws.String(basics.TableName),
+			Key:                       movie.GetKey(),
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			UpdateExpression:          expr.Update(),
+			ReturnValues:              types.ReturnValueUpdatedNew,
+		})
+		if err != nil {
+			log.Printf("Couldn't update movie %v. Here's why: %v\n", movie.Title, err)
+		} else {
+			err = attributevalue.UnmarshalMap(response.Attributes, &attributeMap)
+			if err != nil {
+				log.Printf("Couldn't unmarshall update response. Here's why: %v\n", err)
+			}
+		}
+	}
+	return attributeMap, err
+}
+
+
+*/
+
 type CommunicationFrame struct {
 	Request  ActionFrame.IActionRequest
 	Receiver int32
