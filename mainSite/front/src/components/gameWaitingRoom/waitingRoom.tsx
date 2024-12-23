@@ -1,8 +1,9 @@
 import {useEffect, useState} from "react";
 import ChatComp from "./chatComp.tsx";
-import EventAggregatorClass, {ISubscribe} from "../../EventAggregator/EventAggregatorClass.ts";
+import EventAggregatorClass, {EventTypeEnum, ISubscribe} from "../../EventAggregator/EventAggregatorClass.ts";
 import MessageSentEventObject from "../../EventAggregator/NotificationType/Messages/messageSent.ts";
 import MessageReceivedEventObject from "../../EventAggregator/NotificationType/Messages/MessageReceived.ts";
+import ServerMessageReceivedObject from "../../EventAggregator/NotificationType/Messages/serverMessageReceived.ts";
 import {gameServerURL} from "../../consts.ts";
 import {playerId} from "../../App.tsx";
 import {Button} from "@mui/material";
@@ -16,14 +17,17 @@ class gameWaitingRoom implements ISubscribe{
             this.registerMessage("me: " + notification.message)
         }else if (notification instanceof MessageReceivedEventObject){
             this.registerMessage("enemy: " + notification.message)
+        }else if (notification instanceof ServerMessageReceivedObject){
+            this.registerMessage("server: " + notification.message)
         }
 
     }
 
     constructor(fn : (message: string) => void) {
         this.registerMessage = fn
-        EventAggregatorClass.instance.registerSubscriber("MessageSentEvent", this)
-        EventAggregatorClass.instance.registerSubscriber("MessageReceivedEvent", this)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.MessageSentEvent, this)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.MessageReceivedEvent, this)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.ServerMessageReceived, this)
     }
 
 }
@@ -41,8 +45,9 @@ export default function GameWaitingRoom({gameId}:IGameWaitingRoom ){
             setChatHistory(prevHistory => [...prevHistory, message])
         })
         return ()=>{
-            EventAggregatorClass.instance.unSubscribe("MessageReceivedEvent",historyHandlerClass)
-            EventAggregatorClass.instance.unSubscribe("MessageSentEvent",historyHandlerClass)
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.MessageReceivedEvent,historyHandlerClass)
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.MessageSentEvent,historyHandlerClass)
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.ServerMessageReceived,historyHandlerClass)
             fetch(`http://${gameServerURL}/leaveGame?gameId=${gameId}&playerId=${playerId}`).then(res => {
                 if (res.status === 200){
                     console.log("successfully unregister connection")

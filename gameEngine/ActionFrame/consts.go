@@ -3,10 +3,11 @@ package ActionFrame
 type Action uint8
 
 const (
-	Empty   = Action(0)
-	Message = Action(1)
-	Attack  = Action(2)
-	Build   = Action(3)
+	Empty         = Action(0)
+	Message       = Action(1)
+	Attack        = Action(2)
+	Build         = Action(3)
+	ServerMessage = Action(4)
 )
 
 type IActionRequest interface {

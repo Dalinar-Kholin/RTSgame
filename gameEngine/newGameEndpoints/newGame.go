@@ -3,6 +3,7 @@ package newGameEndpoints
 import (
 	"context"
 	"fmt"
+	"gameEngine/ActionFrame"
 	"gameEngine/connectionHub"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -133,7 +134,7 @@ func (g *GameEndpoints) JoinGame(c *gin.Context) {
 		UpdateExpression:          expr.Update(),
 		ReturnValues:              types.ReturnValueUpdatedNew,
 	})
-
+	firstPlayerChan <- &ActionFrame.ServerMessageRequest{FrameType: ActionFrame.ServerMessage, Message: "player join to chat"}
 	c.JSON(200, gin.H{
 		"result": "successfully connected players",
 	})
@@ -213,6 +214,14 @@ func (g *GameEndpoints) LeaveGame(c *gin.Context) {
 	connectionHub.Hub.SetChan(result.FirstPlayerId, secondPlayerChan)
 	connectionHub.Hub.SetChan(result.SecondPlayerId, firstPlayerChan)
 	// zamieniliśmy je kolejnością, powinno być dobrze
+
+	playerLeftRoom := &ActionFrame.ServerMessageRequest{FrameType: ActionFrame.ServerMessage, Message: "player left rooom"}
+	if result.FirstPlayerId == int32(playerId) { // jeżeli pierwszy gracz uciekł to musimy ustawić 2 gacza jako pierwszego gracza
+		firstPlayerChan <- playerLeftRoom
+	} else {
+		secondPlayerChan <- playerLeftRoom
+	}
+
 	c.JSON(200, gin.H{
 		"result": "successfully connected players",
 	})

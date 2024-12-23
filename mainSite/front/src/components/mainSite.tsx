@@ -3,9 +3,6 @@ import {useEffect, useState} from "react";
 import {Button} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import {playerId} from "../App.tsx";
-import EventAggregatorClass from "../EventAggregator/EventAggregatorClass.ts";
-import MessageSentEventObject from "../EventAggregator/NotificationType/Messages/messageSent.ts";
-
 
 interface IGamesToJoin {
     FirstPlayerId: number,
@@ -86,7 +83,6 @@ export default function MainSite({setGameId}: IMainSite) {
                                     if (res.status !== 200) {
                                         throw new Error("chuj nie działa")
                                     } else {
-                                        EventAggregatorClass.instance.notify("MessageSentEvent", new MessageSentEventObject("player join"))
                                         setGameId(g.GameId)
                                         navigate("/gameWaitingRoom")
                                     }

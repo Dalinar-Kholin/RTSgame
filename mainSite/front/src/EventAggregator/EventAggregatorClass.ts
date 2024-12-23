@@ -1,5 +1,16 @@
 // niejawna implementacja interfacu type: string
-type EventTypes = "MessageReceivedEvent" | "MessageSentEvent" | "AttackEvent" // to musi być tylko enumerator
+
+
+
+export const EventTypeEnum = { // wszystkie możliwe typy powiadomień
+    MessageReceivedEvent: 0,
+    MessageSentEvent: 1,
+    AttackEvent: 2,
+    ServerMessageReceived: 3
+}
+
+
+type EventTypes = (typeof EventTypeEnum)[keyof typeof EventTypeEnum] // to musi być tylko enumerator
 
 export interface ISubscribe {
     Handle: (notification: object) => void
@@ -9,10 +20,10 @@ export interface ISubscribe {
 export default class EventAggregatorClass{
     static #instance: EventAggregatorClass;
 
-    _subscribers : Map<string, ISubscribe[]>
+    _subscribers : Map<EventTypes, ISubscribe[]>
 
     private constructor() {
-        this._subscribers = new Map<string, ISubscribe[]>()
+        this._subscribers = new Map<EventTypes, ISubscribe[]>()
     }
 
     public static get instance(): EventAggregatorClass {

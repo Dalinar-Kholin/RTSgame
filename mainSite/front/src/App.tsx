@@ -8,12 +8,14 @@ import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import {gameServerURL} from "./consts.ts";
 import {Parser} from "./communicationType/frames/frameParser.ts";
 import {DataMessageFrame} from "./communicationType/frames/dataMessageFrame.ts";
-import EventAggregatorClass, {ISubscribe} from "./EventAggregator/EventAggregatorClass.ts";
+import EventAggregatorClass, {EventTypeEnum, ISubscribe} from "./EventAggregator/EventAggregatorClass.ts";
 import {v4 as uuidv4} from "uuid";
 import AttackDataFrame from "./communicationType/frames/attackDataFrame.ts";
 import AttackEvent from "./EventAggregator/NotificationType/attackEvent.ts";
 import MessageReceivedEventObject from "./EventAggregator/NotificationType/Messages/MessageReceived.ts";
 import MessageSentEventObject from "./EventAggregator/NotificationType/Messages/messageSent.ts";
+import {ServerMessageFrame} from "./communicationType/frames/serverMessageFrame.ts";
+import ServerMessageReceivedObject from "./EventAggregator/NotificationType/Messages/serverMessageReceived.ts";
 
 
 export let playerId= uuidToUint32();
@@ -43,14 +45,15 @@ export default function App() {
         let messageSender: ISubscribe = {
             Handle: (notification: object): void => {
                 const notif  = (notification as MessageSentEventObject)
+                console.log("ogg?")
                 gameSocket.send(new DataMessageFrame(notif.message).packageDataFrame())
             }
         }
 
-        EventAggregatorClass.instance.registerSubscriber("MessageSentEvent", messageSender)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.MessageSentEvent, messageSender)
 
         return ()=>{
-            EventAggregatorClass.instance.unSubscribe("MessageSentEvent", messageSender )
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.MessageSentEvent, messageSender )
         }
 
     }, []);
@@ -60,9 +63,13 @@ export default function App() {
             if (e.data instanceof ArrayBuffer){
                 let frame = Parser.instance.parse(new Uint8Array(e.data))
                 if (frame instanceof DataMessageFrame){
-                    EventAggregatorClass.instance.notify("MessageReceivedEvent", new MessageReceivedEventObject(frame.message))
+                    console.log("enemy message")
+                    EventAggregatorClass.instance.notify(EventTypeEnum.MessageReceivedEvent, new MessageReceivedEventObject(frame.message))
                 }else if (frame instanceof AttackDataFrame){
-                    EventAggregatorClass.instance.notify("AttackEvent", new AttackEvent(10,11))
+                    EventAggregatorClass.instance.notify(EventTypeEnum.AttackEvent, new AttackEvent(10,11))
+                }else if (frame instanceof ServerMessageFrame){
+                    console.log("server message")
+                    EventAggregatorClass.instance.notify(EventTypeEnum.ServerMessageReceived, new ServerMessageReceivedObject(frame.message))
                 }/*dla każdej akcji odpowiednie powiadomienie*/
             }else{
                 console.log("pogger\n")
