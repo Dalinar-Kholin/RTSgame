@@ -83,6 +83,7 @@ func (h *ConnectionHub) RegisterNewConnection(conn *websocket.Conn, id int32) {
 }
 
 func registerClosedConnection(conn *websocket.Conn, err error) {
+	// TODO: mniej więcej tutaj dodać wychodzenie z wszystkich gier w których połączenie było zarejestrowane
 	fmt.Printf("połączenie z %s zakończone by %v\n", conn.RemoteAddr(), err)
 }
 

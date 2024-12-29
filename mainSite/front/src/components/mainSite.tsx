@@ -1,6 +1,6 @@
 import {gameServerURL} from "../consts.ts";
 import {useEffect, useState} from "react";
-import {Button} from "@mui/material";
+import {Box, Button} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import {playerId} from "../App.tsx";
 
@@ -54,7 +54,9 @@ export default function MainSite({setGameId}: IMainSite) {
 
     console.log(gamesToJoin)
     return (
-        <>
+        <Box sx={{
+            justifyContent: "center"
+        }}>
             <p></p>
             <Button onClick={() => refreshRoom((d) => {
                 setGamesToJoin(d)
@@ -99,6 +101,6 @@ export default function MainSite({setGameId}: IMainSite) {
                     </>
                 )
             }) : <></>}
-        </>
+        </Box>
     )
 }

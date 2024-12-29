@@ -6,7 +6,9 @@ export const EventTypeEnum = { // wszystkie możliwe typy powiadomień
     MessageReceivedEvent: 0,
     MessageSentEvent: 1,
     AttackEvent: 2,
-    ServerMessageReceived: 3
+    ServerMessageReceived: 3,
+    CanvasRightClick: 4,
+    CanvasLeftClick: 5
 }
 
 
