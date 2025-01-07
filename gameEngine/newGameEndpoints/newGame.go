@@ -61,7 +61,7 @@ func (g *GameEndpoints) NewGame(c *gin.Context) {
 	gameId, _ := uuid.NewUUID()
 	game := NewGame{GameId: int32(gameId.ID()), FirstPlayerId: int32(playerId), SecondPlayerId: 0, PlayersInGame: 1}
 	item, err := attributevalue.MarshalMap(game)
-
+	connectionHub.IdToGameId[int32(playerId)] = game.GameId
 	_, err = g.Svc.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		TableName: aws.String(gameDb), Item: item,
 	})
@@ -89,6 +89,8 @@ func (g *GameEndpoints) JoinGame(c *gin.Context) {
 		})
 		return
 	}
+
+	connectionHub.IdToGameId[playerId] = int32(gameId)
 	// zestawienie połączeń tak by player
 	// playerOne --> playerTwo oraz
 	// playerTwo --> playerOne
@@ -134,7 +136,7 @@ func (g *GameEndpoints) JoinGame(c *gin.Context) {
 		UpdateExpression:          expr.Update(),
 		ReturnValues:              types.ReturnValueUpdatedNew,
 	})
-	firstPlayerChan <- &ActionFrame.ServerMessageRequest{FrameType: ActionFrame.ServerMessage, Message: "player join to chat"}
+	firstPlayerChan <- &ActionFrame.ServerMessageRequest{FrameType: ActionFrame.ServerMessage, Message: "player join to chat"} // frontend czeka na dokładnie taką wiadomość przy zmianie pamiętaj o zminaie na fornicie
 	c.JSON(200, gin.H{
 		"result": "successfully connected players",
 	})
@@ -215,8 +217,8 @@ func (g *GameEndpoints) LeaveGame(c *gin.Context) {
 	connectionHub.Hub.SetChan(result.SecondPlayerId, firstPlayerChan)
 	// zamieniliśmy je kolejnością, powinno być dobrze
 
-	playerLeftRoom := &ActionFrame.ServerMessageRequest{FrameType: ActionFrame.ServerMessage, Message: "player left rooom"}
-	if result.FirstPlayerId == int32(playerId) { // jeżeli pierwszy gracz uciekł to musimy ustawić 2 gacza jako pierwszego gracza
+	playerLeftRoom := &ActionFrame.ServerMessageRequest{FrameType: ActionFrame.ServerMessage, Message: "player left rooom"} // front czeka na tą wiadomość przy zminie zmień
+	if result.FirstPlayerId == int32(playerId) {                                                                            // jeżeli pierwszy gracz uciekł to musimy ustawić 2 gacza jako pierwszego gracza
 		firstPlayerChan <- playerLeftRoom
 	} else {
 		secondPlayerChan <- playerLeftRoom

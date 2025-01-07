@@ -9,7 +9,8 @@ export const FrameTypeEnum =  {
     message: 1,
     attack: 2,
     build: 3,
-    serverMessage: 4
+    serverMessage: 4,
+    startGame: 5
 }
 
 export type FrameTypeEnumType = (typeof FrameTypeEnum)[keyof typeof FrameTypeEnum]

@@ -8,6 +8,7 @@ const (
 	Attack        = Action(2)
 	Build         = Action(3)
 	ServerMessage = Action(4)
+	StartGame     = Action(5)
 )
 
 type IActionRequest interface {

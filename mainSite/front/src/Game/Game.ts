@@ -24,14 +24,16 @@ type FieldMap = {
 
 let colorPalette: FieldMap ={
     [fieldType.ground]: "#000000",
-    [fieldType.mMelee]: "#ff0000",
-    [fieldType.eMelee]: "#00ff00",
+    [fieldType.eMelee]: "#ff0000",
+    [fieldType.mMelee]: "#00ff00",
     [fieldType.mRange]: "#0000ff",
-    [fieldType.eRange]: "#ff00ff"
+    [fieldType.eRange]: "#ff00ff",
+    [fieldType.mBase]: "#00ffff",
+    [fieldType.eBase]: "#ffff00"
 }
 
 
-let boardToDraw: field[][] = []
+export let GameBoard: field[][] = []
 export let offsets= {
     offsetX: 0,
     offsetY: 0
@@ -40,12 +42,20 @@ export let offsets= {
 
 const draw = () => {
     if (ctx === null){
+        console.log("error")
         return
     }
+    canvas = document.getElementById("gameCanvas") as HTMLCanvasElement | null
+    if (canvas === null){
+        throw new Error("cant take canvas")
+    }
+    const rect = canvas.getBoundingClientRect();
+    charCordEnum.y = Math.round(rect.top + window.scrollY)
+    charCordEnum.x = Math.round(rect.left + window.screenX)
     let context:  CanvasRenderingContext2D = ctx as CanvasRenderingContext2D
     for (let i = 0; i < visibilitySize[0]; i++) {
         for (let j = 0; j < visibilitySize[1]; j++) {
-            context.fillStyle=colorPalette[boardToDraw[i+offsets.offsetX][j+offsets.offsetY].type];
+            context.fillStyle=colorPalette[GameBoard[i+offsets.offsetX][j+offsets.offsetY].type];
             context.fillRect(i*10, j*10, 10, 10);
         }
     }
@@ -61,9 +71,6 @@ class animator{
         if (canvas === null){
             throw new Error("cant take canvas")
         }
-        const rect = canvas.getBoundingClientRect();
-        charCordEnum.y = Math.round(rect.top + window.scrollY)
-        charCordEnum.x = Math.round(rect.left + window.screenX)
 
         ctx = canvas.getContext("2d")
         if (ctx === null){
@@ -85,12 +92,12 @@ class eventInterpreter{
     Handle(notification: object): void { // niejawnie używane w eventAggregatorze
         if (notification instanceof RightClickEventObject) {
             console.log(`right event ${notification.x} ${notification.y}`)
-            this.gameBoard[Math.round(notification.x/10) + offsets.offsetX][Math.round(notification.y/10) + offsets.offsetY].setCharacter(new MWarrior(fieldType.mMelee))
+            this.gameBoard[Math.floor(notification.x/10) + offsets.offsetX][Math.floor(notification.y/10) + offsets.offsetY].setCharacter(new MWarrior(fieldType.mMelee))
         }else if (notification instanceof LeftClickEventObject) {
-            this.selectedCharacter = this.gameBoard[Math.round(notification.x/10) + offsets.offsetX][Math.round(notification.y/10) + offsets.offsetY].content
-            console.log(`left event  ${Math.round(notification.x/10)} ${Math.round(notification.y/10)}`)
+            this.selectedCharacter = this.gameBoard[Math.floor(notification.x/10) + offsets.offsetX][Math.floor(notification.y/10) + offsets.offsetY].content
+            console.log(`left event  ${Math.floor(notification.x/10)} ${Math.floor(notification.y/10)}`)
         }
-        boardToDraw = this.gameBoard
+        GameBoard = this.gameBoard
     }
 
 
@@ -118,6 +125,7 @@ export default class Game{
     private constructor() {
         this.animator = new animator({board: this.gameBoard})
         this.interpreter = new eventInterpreter(this.gameBoard, this.selectedCharacter)
+        GameBoard = this.gameBoard
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasRightClick, this.interpreter)
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasLeftClick, this.interpreter)
 

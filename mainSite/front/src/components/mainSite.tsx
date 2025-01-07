@@ -71,7 +71,7 @@ export default function MainSite({setGameId}: IMainSite) {
                     (data: newGame) => {
                         console.log("" + data.gameId)
                         setGameId(data.gameId)
-                        navigate("/gameWaitingRoom")
+                        navigate("/gameWaitingRoom", {state: {isMade: true}})
                     }
                 )
             }}>make new game</Button>
@@ -86,7 +86,7 @@ export default function MainSite({setGameId}: IMainSite) {
                                         throw new Error("chuj nie działa")
                                     } else {
                                         setGameId(g.GameId)
-                                        navigate("/gameWaitingRoom")
+                                        navigate("/gameWaitingRoom", {state: {isMade: false}})
                                     }
                                 }
                             )

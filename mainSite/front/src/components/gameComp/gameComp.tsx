@@ -4,6 +4,8 @@ import EventAggregatorClass, {EventTypeEnum} from "../../EventAggregator/EventAg
 import {gameServerURL} from "../../consts.ts";
 import {playerId} from "../../App.tsx";
 import LeftClickEventObject, {RightClickEventObject} from "../../EventAggregator/NotificationType/clicks.ts";
+import {Box} from "@mui/material";
+import SelectedCharacterComp from "../gameWaitingRoom/selectedCharacterComp.tsx";
 
 export const clickEnum = { // wszystkie możliwe typy powiadomień
     left: 0,
@@ -50,6 +52,9 @@ export default function GameComp({gameId} : IGameComp){
 
     return(
         <>
+            <Box>
+                pasek zasobów
+            </Box>
             <canvas tabIndex={0} style={{border: '2px solid #fff'}} id="gameCanvas" width="1000" height="1000" onClick={(c) => {
                 clickInterpret({
                     x: c.clientX - charCordEnum.x,
@@ -94,6 +99,7 @@ export default function GameComp({gameId} : IGameComp){
             }
             >
             </canvas>
+            <SelectedCharacterComp/>
         </>
     )
 }

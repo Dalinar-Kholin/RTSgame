@@ -16,6 +16,8 @@ import MessageReceivedEventObject from "./EventAggregator/NotificationType/Messa
 import MessageSentEventObject from "./EventAggregator/NotificationType/Messages/messageSent.ts";
 import {ServerMessageFrame} from "./communicationType/frames/serverMessageFrame.ts";
 import ServerMessageReceivedObject from "./EventAggregator/NotificationType/Messages/serverMessageReceived.ts";
+import {StartGameFrame} from "./communicationType/frames/startGame.ts";
+import {StartGameObject} from "./EventAggregator/NotificationType/Messages/startGame.ts";
 
 
 export let playerId= uuidToUint32();
@@ -50,27 +52,34 @@ export default function App() {
             }
         }
 
-        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.MessageSentEvent, messageSender)
+        let gameStart: ISubscribe = {
+            Handle: (__notification: object): void => {
+                gameSocket.send(new StartGameFrame().packageDataFrame())
+            }
+        }
 
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.MessageSentEvent, messageSender)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.startGameSent, gameStart)
         return ()=>{
-            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.MessageSentEvent, messageSender )
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.MessageSentEvent, messageSender)
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.startGameSent, gameStart)
         }
 
     }, []);
 
     useEffect(() => {
-        gameSocket.onmessage = (e)=>{// zastąpić to observerem
+        gameSocket.onmessage = (e)=>{
             if (e.data instanceof ArrayBuffer){
                 let frame = Parser.instance.parse(new Uint8Array(e.data))
                 if (frame instanceof DataMessageFrame){
-                    console.log("enemy message")
                     EventAggregatorClass.instance.notify(EventTypeEnum.MessageReceivedEvent, new MessageReceivedEventObject(frame.message))
                 }else if (frame instanceof AttackDataFrame){
                     EventAggregatorClass.instance.notify(EventTypeEnum.AttackEvent, new AttackEvent(10,11))
                 }else if (frame instanceof ServerMessageFrame){
-                    console.log("server message")
                     EventAggregatorClass.instance.notify(EventTypeEnum.ServerMessageReceived, new ServerMessageReceivedObject(frame.message))
-                }/*dla każdej akcji odpowiednie powiadomienie*/
+                }else if (frame instanceof StartGameFrame){
+                    EventAggregatorClass.instance.notify(EventTypeEnum.startGameReceived, new StartGameObject())
+                }
             }else{
                 console.log("pogger\n")
             }

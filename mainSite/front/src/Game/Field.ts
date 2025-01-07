@@ -4,7 +4,9 @@ export const fieldType=  {
     mMelee: 1,
     eMelee: 2,
     mRange: 3,
-    eRange: 4
+    eRange: 4,
+    mBase: 5,
+    eBase: 6,
 }
 
 export type fieldTypeEnum= (typeof fieldType)[keyof typeof fieldType]
