@@ -42,6 +42,8 @@ export default function App() {
 
     const [gameId, setGameId] = useState<number>(0)
 
+
+
     useEffect(() => {
         // register message sender notify for sending message to backend
         let messageSender: ISubscribe = {
@@ -58,9 +60,16 @@ export default function App() {
             }
         }
 
+        // mamy timer generujący przerwanie co 10 ms
+        const intervalId = setInterval(() => {
+            EventAggregatorClass.instance.notify(EventTypeEnum.timerEvent, {})
+        }, 10);
+
+
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.MessageSentEvent, messageSender)
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.startGameSent, gameStart)
         return ()=>{
+            clearInterval(intervalId);
             EventAggregatorClass.instance.unSubscribe(EventTypeEnum.MessageSentEvent, messageSender)
             EventAggregatorClass.instance.unSubscribe(EventTypeEnum.startGameSent, gameStart)
         }

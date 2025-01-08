@@ -11,7 +11,10 @@ export const EventTypeEnum = { // wszystkie możliwe typy powiadomień
     CanvasLeftClick: 5,
     startGameReceived: 6,
     startGameSent: 7, 
-
+    timerEvent: 8,
+    changeCharacter: 9,
+    boardChanged: 10,
+    characterSpawned: 11,
 }
 
 
@@ -64,7 +67,6 @@ export default class EventAggregatorClass{
     }
 
     public notify(notify: EventTypes, obj: object){
-        console.log(`notification sent ${typeof notify}`)
         const tab = this._subscribers.get(notify)
         if (tab===undefined){
             return

@@ -1,32 +1,16 @@
-import EventAggregatorClass, {EventTypeEnum, ISubscribe} from "../../EventAggregator/EventAggregatorClass.ts";
 import field, {fieldType, fieldTypeEnum} from "../../Game/Field.ts";
 import {useEffect, useState} from "react";
-import {GameBoard, offsets} from "../../Game/Game.ts";
-import LeftClickEventObject from "../../EventAggregator/NotificationType/clicks.ts";
 import ERangerPict from "../../../src/assets/ERanger.jpg";
 import MRangerPict from "../../../src/assets/MRanger.jpg";
 import EWarriorPict from "../../../src/assets/EWarrior.jpg";
 import MWarriorPict from "../../../src/assets/MWarrior.jpg";
-import {Box} from "@mui/material";
+import MBase from "../../../src/assets/mBase.jpg";
+import EBase from "../../../src/assets/eBase.jpg";
+import {Box, Button} from "@mui/material";
 import {EWarrior, MWarrior} from "../../Game/content/characters/mWarrior.ts";
+import EventAggregatorClass, {EventTypeEnum} from "../../EventAggregator/EventAggregatorClass.ts";
+import SpawnCharacterEventObject from "../../EventAggregator/NotificationType/spawnCharacter.ts";
 
-class SelectedCharacter implements ISubscribe {
-    registerCharacter: (character: field) => void
-
-    Handle(notification: object): void {
-        if (notification instanceof LeftClickEventObject) {
-            let x = Math.floor(notification.x/10) + offsets.offsetX
-            let y = Math.floor(notification.y/10) + offsets.offsetY
-            this.registerCharacter(GameBoard[x][y])
-        }
-    }
-
-    constructor(fn: (character: field) => void) {
-        this.registerCharacter = fn
-        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasLeftClick, this)
-    }
-
-}
 
 // type to image
 
@@ -38,37 +22,44 @@ let characterToImage: imageMap = { // moim zdaniem w tym typie powinien wystąpi
     [fieldType.mMelee]: MWarriorPict,
     [fieldType.eMelee]: EWarriorPict,
     [fieldType.mRange]: MRangerPict,
-    [fieldType.eRange]: ERangerPict
+    [fieldType.eRange]: ERangerPict,
+    [fieldType.mBase]: MBase,
+    [fieldType.eBase]: EBase,
 }
 
 export default function SelectedCharacterComp(){
-    const [character, setCharacter] = useState<fieldTypeEnum>(fieldType.ground)
-    const [fieldSelected, setFieldSelected] = useState<field>(new field(fieldType.ground))
+    const [myCharacter, setMyCharacter]= useState<fieldTypeEnum>(fieldType.ground)
+
+    const [myFieldSelected, setMyFieldSelected] = useState<field>(new field(fieldType.ground))
+
     useEffect(() => {
-        const characterHandlerClass: SelectedCharacter = new SelectedCharacter((character: field) => {
-            setCharacter(character.type)
-            setFieldSelected(character)
-        })
+        const changeChar = {
+            Handle(notification: object): void {
+                const notif = notification as field
+                setMyCharacter(notif.type)
+                setMyFieldSelected(notif)
+            }
+        }
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.changeCharacter, changeChar)
 
         return () => {
-            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasLeftClick, characterHandlerClass)
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.changeCharacter, changeChar)
         }
-    }, []);
+    }, []); // chcemy zasubskrybować event aggregatora na change character
 
-    if (character === fieldType.ground) {
-        return (
-            <>
-            </>
-        )
-    }
-
+    /*useEffect(() => {
+        setMyCharacter(character)
+        setMyFieldSelected(fieldSelected)
+    }, [character, fieldSelected]) w ogólności nie działa XDDD*/
     // skoro nie jest groundem to musi być jednnostką ze statystykami które chcemy wyświetlić graczowi
 
-    const fieldContent = fieldSelected.content
+
+
+    const fieldContent = myFieldSelected.content
 
     let comp = <></>
 
-    switch (character) {
+    switch (myCharacter) {
         case fieldType.mMelee:
             const mMelee = fieldContent as MWarrior
             comp = <Box>
@@ -89,11 +80,19 @@ export default function SelectedCharacterComp(){
             break
         case fieldType.eRange:
             break
+        case fieldType.mBase:
+            comp= <Box>
+                <Button onClick={() => { EventAggregatorClass.instance.notify(EventTypeEnum.characterSpawned,new SpawnCharacterEventObject(fieldType.mMelee))}}>warrior</Button>
+                <Button onClick={() => { EventAggregatorClass.instance.notify(EventTypeEnum.characterSpawned,new SpawnCharacterEventObject(fieldType.mRange))}}>ranger</Button>
+            </Box>
+
+
     }
 
     return(
-        <Box sx={{display: "flex", alignItems: "center", flexDirection: "column"}}>
-            <Box component="img" src={characterToImage[character]} alt={character.toFixed()} width="40px" height="40px" style={{margin: "auto",borderRadius: "10px"}}/>
+        <Box sx={{display: "flex", alignItems: "center", flexDirection: "column", height: "100px"}}>
+            { myCharacter !== fieldType.ground ? <Box component="img" src={characterToImage[myCharacter]} alt={myCharacter.toFixed()} width="40px"
+                  height="40px" style={{margin: "auto", borderRadius: "10px"}}/> : <></>}
             {comp}
         </Box>
     )

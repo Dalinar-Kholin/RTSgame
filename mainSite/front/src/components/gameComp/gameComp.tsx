@@ -1,11 +1,13 @@
 import {useEffect} from "react";
-import Game, {charCordEnum, gameSize, offsets} from "../../Game/Game.ts";
+import Game, {charCordEnum, GameBoard, gameSize, offsets} from "../../Game/Game.ts";
 import EventAggregatorClass, {EventTypeEnum} from "../../EventAggregator/EventAggregatorClass.ts";
 import {gameServerURL} from "../../consts.ts";
 import {playerId} from "../../App.tsx";
 import LeftClickEventObject, {RightClickEventObject} from "../../EventAggregator/NotificationType/clicks.ts";
 import {Box} from "@mui/material";
 import SelectedCharacterComp from "../gameWaitingRoom/selectedCharacterComp.tsx";
+import field, {fieldType} from "../../Game/Field.ts";
+import {MWarrior} from "../../Game/content/characters/mWarrior.ts";
 
 export const clickEnum = { // wszystkie możliwe typy powiadomień
     left: 0,
@@ -39,7 +41,7 @@ export default function GameComp({gameId} : IGameComp){
 
         return ()=>{
             Game.instance.stopAnimating()
-            Game.instance.clearGame() // pod koniec gry chcemy ją wyczyścić
+            Game.instance.destructor() // pod koniec gry chcemy ją wyczyścić
             fetch(`http://${gameServerURL}/leaveGame?gameId=${gameId}&playerId=${playerId}`).then(res => {
                 if (res.status === 200) {
                     console.log("successfully unregister connection")
@@ -93,6 +95,11 @@ export default function GameComp({gameId} : IGameComp){
                             if (offsets.offsetY > 0){
                                 offsets.offsetY -= 1
                             }
+                            break
+                        case "q":
+                            const newField = new field(fieldType.mMelee)
+                            newField.content = new MWarrior(fieldType.mMelee)
+                            GameBoard[10][10] = newField
                             break
                     }
                 }

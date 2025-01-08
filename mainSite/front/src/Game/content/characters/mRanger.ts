@@ -7,13 +7,13 @@ const warriorStats={
     range:1
 }
 
-export class defaultWarrior implements ICharactersUtils{
+export class defaultRanger implements ICharactersUtils{
     attack: number
     health: number
     range: number
     isMoving: boolean = false
     stopAction: boolean = false
-    speed: number = 100 // szybkość jednostki, ile tików timera zajmuje jej przejście do następnego pola
+    speed: number = 15 // szybkość jednostki, ile tików timera zajmuje jej przejście do następnego pola
     type: fieldTypeEnum
     constructor(type : fieldTypeEnum) {
         this.attack = warriorStats.attack
@@ -31,13 +31,13 @@ export class defaultWarrior implements ICharactersUtils{
 }
 
 
-export class MWarrior extends defaultWarrior{
+export class MRanger extends defaultRanger{
     constructor(type : fieldTypeEnum) {
         super(type);
     }
 }
 
-export class EWarrior extends defaultWarrior{
+export class ERanger extends defaultRanger{
     constructor(type : fieldTypeEnum) {
         super(type);
     }

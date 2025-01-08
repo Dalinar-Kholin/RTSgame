@@ -1,7 +1,6 @@
 import field, {fieldType, fieldTypeEnum} from "./Field.ts";
 import EventAggregatorClass, {EventTypeEnum} from "../EventAggregator/EventAggregatorClass.ts";
-import LeftClickEventObject, {RightClickEventObject} from "../EventAggregator/NotificationType/clicks.ts";
-import {MWarrior} from "./content/characters/mWarrior.ts";
+import {handleLeft, handleRight, handleSpawn} from "./eventHandlers.ts";
 
 export const gameSize = [256, 256]
 const visibilitySize = [100, 100] // rozmiar jednego pola widzenia
@@ -12,6 +11,10 @@ export const charCordEnum: {
     x: 0,
     y: 0
 }
+
+
+
+
 
 let canvas: HTMLCanvasElement | null = null
 let ctx :  CanvasRenderingContext2D | null;
@@ -86,32 +89,10 @@ class animator{
 
 }
 
-class eventInterpreter{
-    gameBoard: field[][]
-    selectedCharacter: object | null = null
-    Handle(notification: object): void { // niejawnie używane w eventAggregatorze
-        if (notification instanceof RightClickEventObject) {
-            console.log(`right event ${notification.x} ${notification.y}`)
-            this.gameBoard[Math.floor(notification.x/10) + offsets.offsetX][Math.floor(notification.y/10) + offsets.offsetY].setCharacter(new MWarrior(fieldType.mMelee))
-        }else if (notification instanceof LeftClickEventObject) {
-            this.selectedCharacter = this.gameBoard[Math.floor(notification.x/10) + offsets.offsetX][Math.floor(notification.y/10) + offsets.offsetY].content
-            console.log(`left event  ${Math.floor(notification.x/10)} ${Math.floor(notification.y/10)}`)
-        }
-        GameBoard = this.gameBoard
-    }
-
-
-    constructor(board: field[][], selectedCharacter: object | null = null) {
-        this.gameBoard = board
-        this.selectedCharacter = selectedCharacter
-    }
-}
-
 
 export default class Game{
     static #instance: Game; // singleton bo inaczej może być przypał
     animator: animator
-    interpreter: eventInterpreter
     gameBoard: field[][] = Array.from(
         { length: gameSize[0] },
         () => Array.from(
@@ -120,26 +101,29 @@ export default class Game{
         )
     );
 
-    selectedCharacter: object | null = null // jaki obiekt jest zaznaczony na akcje
-
     private constructor() {
-        this.animator = new animator({board: this.gameBoard})
-        this.interpreter = new eventInterpreter(this.gameBoard, this.selectedCharacter)
-        GameBoard = this.gameBoard
-        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasRightClick, this.interpreter)
-        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasLeftClick, this.interpreter)
 
+
+        this.animator = new animator({board: this.gameBoard})
+        GameBoard = this.gameBoard
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasRightClick, handleRight)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasLeftClick, handleLeft)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.characterSpawned, handleSpawn)
     } // mamy plansze
 
-    public clearGame(){
-      this.gameBoard= Array.from(
-          { length: gameSize[0] },
-          () => Array.from(
-              { length: gameSize[1] },
-              () => new field(fieldType.ground)
-          )
-      );
+    public destructor(){
+        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasRightClick, handleRight)
+        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasLeftClick, handleLeft)
+        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.characterSpawned, handleSpawn)
+        this.gameBoard = Array.from(
+            { length: gameSize[0] },
+            () => Array.from(
+                { length: gameSize[1] },
+                () => new field(fieldType.ground)
+            )
+        );
     }
+
 
     public static get instance(): Game {
         if (!Game.#instance) {
@@ -163,8 +147,8 @@ export default class Game{
 
     public stopAnimating(){
         this.animator.cancelAnimating()
-        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasRightClick, this.interpreter)
-        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasLeftClick, this.interpreter)
+        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasRightClick, handleRight)
+        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasLeftClick, handleLeft)
 
     }
     public startAnimating(){

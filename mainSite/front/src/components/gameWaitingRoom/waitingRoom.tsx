@@ -2,11 +2,13 @@ import ChatComp from "./chatComp.tsx";
 import {Box, Button} from "@mui/material";
 import {useLocation, useNavigate} from "react-router-dom";
 import GameComp from "../gameComp/gameComp.tsx";
-import Game from "../../Game/Game.ts";
+import Game, {GameBoard} from "../../Game/Game.ts";
 import {useEffect, useState} from "react";
 import EventAggregatorClass, {EventTypeEnum, ISubscribe} from "../../EventAggregator/EventAggregatorClass.ts";
 import {StartGameObject} from "../../EventAggregator/NotificationType/Messages/startGame.ts";
 import ServerMessageReceivedObject from "../../EventAggregator/NotificationType/Messages/serverMessageReceived.ts";
+import field, {fieldType} from "../../Game/Field.ts";
+import {mHeadBase} from "../../Game/content/buildings/headBase.ts";
 
 
 interface IGameWaitingRoom{
@@ -60,6 +62,16 @@ export default function GameWaitingRoom({gameId}:IGameWaitingRoom ){
 
     if (isEnemyReady && isPlayerReady){
         Game.instance.startAnimating()
+        // spawnowanie sowjej bazy
+        const newField = new field(fieldType.mBase)
+        newField.content = new mHeadBase(19,19)
+        GameBoard[20][20] = newField
+        GameBoard[21][20] = newField
+        GameBoard[22][20] = newField
+        GameBoard[20][21] = newField
+        GameBoard[21][21] = newField
+        GameBoard[22][21] = newField
+
     }
 
     return(
