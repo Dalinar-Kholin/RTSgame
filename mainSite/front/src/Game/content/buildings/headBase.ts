@@ -1,6 +1,6 @@
 import {fieldType, fieldTypeEnum} from "../../Field.ts";
 
-class HeadBase {
+export class HeadBase {
     health: number;
     fieldToSpawnTroops: [number,number];
     availableTroops: fieldTypeEnum[];

@@ -30,30 +30,25 @@ export class newBoardReceivedFrame{
         // ilość pakietów *
         const typedArray1 = new Uint8Array(this.newBoard.length * 5/*typ, koordynaty X, Y, zdrowie - 2 Bajty*/+1 /*typ pakietu*/);
         typedArray1[0] = FrameTypeEnum.boardFrame; // typ ramki
-        console.log(`board Frame len :=  ${this.newBoard.length}`)
-        for (let i = 0; i < this.newBoard.length; i++) {
-            console.log(`field := ${this.newBoard[i]}`)
-        }
+        const dataTab = this.newBoard
+        const len = dataTab.length
+
         let boardIndex = 0;
-        for (let i = 1; i < this.newBoard.length; i++){
-            console.log(`?${this.newBoard[boardIndex]}?`)
-            typedArray1[i] = this.newBoard[boardIndex].type
-            typedArray1[i+1] = this.newBoard[boardIndex].cord[0]
-            typedArray1[i+2] = this.newBoard[boardIndex].cord[1]
-            const health = (this.newBoard[boardIndex].content as ICharactersUtils).health
-            typedArray1[i+3] = health>>8
-            typedArray1[i+4] = health%256
+
+        for (let i = 0; i < len; i++){
+            typedArray1[(i*5)+1] = dataTab[boardIndex].type
+            typedArray1[(i*5)+2] = dataTab[boardIndex].cord[0]
+            typedArray1[(i*5)+3] = dataTab[boardIndex].cord[1]
+            const health = (dataTab[boardIndex].content as ICharactersUtils).health
+            typedArray1[(i*5)+4] = health>>8
+            typedArray1[(i*5)+5] = health%256
             boardIndex++
         }
-        console.log(`typedArray1 := ${typedArray1}`)
         return typedArray1
     }
 }
 
 const mapIntoFrame = (key: field, cord: cord): INewBoardReceivedFrame=>{
-    console.log({
-        content: key.content as object/*wiemy że w field będzie kontent*/, cord: [cord[0], cord[1]], type: key.type
-    })
     return {
         content: key.content as object/*wiemy że w field będzie kontent*/, cord: [cord[0], cord[1]], type: key.type
     }
@@ -65,12 +60,10 @@ export function PackageGameBoard(): INewBoardReceivedFrame[] {
         () => emptyBoardField
     )
     let iter = 0
-    console.log(`rozmiary := ${res.length} ${unitMap.size}`)
     for (const unitMapKey of unitMap.keys()) {
         res[iter] = mapIntoFrame(unitMapKey, unitMap.get(unitMapKey) as cord/*wiemy że zawsze ten obiekt występuje*/)
         iter++
     }
-    console.log(`res := ${res[0]} ${res[1]}`)
     return res
 }
 

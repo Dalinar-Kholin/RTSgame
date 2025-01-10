@@ -73,7 +73,6 @@ export default function GameComp({gameId} : IGameComp){
             }} onKeyDown={
                 (e) => {
                     e.preventDefault();
-                    console.log(e.key.toLowerCase())
                     switch (e.key.toLowerCase()) {
                         case "d":
                             if (offsets.offsetX < gameSize[0]- visibilitySize[0]){

@@ -4,7 +4,7 @@ import {handleLeft, handleNewBoardReceived, handleRight, handleSpawn} from "./ev
 import {playerNumber} from "../components/mainSite.tsx";
 import {EWarrior, MWarrior} from "./content/characters/mWarrior.ts";
 import {ERanger, MRanger} from "./content/characters/mRanger.ts";
-import {eHeadBase, mHeadBase} from "./content/buildings/headBase.ts";
+import {eHeadBase, HeadBase, mHeadBase} from "./content/buildings/headBase.ts";
 
 export const gameSize = [256, 256]
 export const visibilitySize = [100, 100] // rozmiar jednego pola widzenia
@@ -32,6 +32,9 @@ export const GroundObject = new field(fieldType.ground)
 // nie ma po co tworzyć miliona obiektów typu ground, można stworzyć tylko jeden i go kopiować, dla reszty obiektów potrzebujemy unikatów
 
 
+
+export let myBaseObject: {base: HeadBase, cord: cord} = {base: new mHeadBase(12,12), cord: [0,0]}
+
 let canvas: HTMLCanvasElement | null = null
 let ctx :  CanvasRenderingContext2D | null;
 let raf: any;
@@ -41,15 +44,7 @@ type FieldMap = {
     [key in fieldTypeEnum]: string;
 };
 
-let colorPalette: FieldMap ={
-    [fieldType.ground]: "#000000",
-    [fieldType.eMelee]: "#ff0000",
-    [fieldType.mMelee]: "#00ff00",
-    [fieldType.mRange]: "#0000ff",
-    [fieldType.eRange]: "#ff00ff",
-    [fieldType.mBase]: "#00ffff",
-    [fieldType.eBase]: "#ffff00"
-}
+
 
 
 export let GameBoard: field[][] = []
@@ -63,13 +58,16 @@ export let enemyBase = fieldType.eBase
 
 export let typeToObject: (() => object)[] = []
 
+let colorPalette: FieldMap ={
 
+}
 
 //let BoardToDraw: field[][] = [] // tablica przekazywana przez backend do narysowania
 export let offsets= {
     offsetX: 0,
     offsetY: 0
 }
+
 
 
 const draw = () => {
@@ -151,6 +149,16 @@ export default class Game{
             typeToObject[enemyMelee] = () => {return new EWarrior()}
             typeToObject[enemyRange] = () => {return new ERanger()}
             typeToObject[enemyBase] = () => {return new eHeadBase(32,32)}
+        }
+
+        colorPalette = {
+            [fieldType.ground]: "#000000",
+            [enemyMelee]: "#ff0000",
+            [myMelee]: "#00ff00",
+            [myRange]: "#0000ff",
+            [enemyRange]: "#ff00ff",
+            [myBase]: "#00ffff",
+            [enemyBase]: "#ffff00"
         }
 
         this.animator = new animator({board: this.gameBoard})

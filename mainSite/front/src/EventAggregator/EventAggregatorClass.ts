@@ -29,7 +29,7 @@ export interface ISubscribe {
 export default class EventAggregatorClass{
     static #instance: EventAggregatorClass;
 
-    _subscribers : Map<EventTypes, ISubscribe[]>
+    private _subscribers : Map<EventTypes, ISubscribe[]>
 
     private constructor() {
         this._subscribers = new Map<EventTypes, ISubscribe[]>()

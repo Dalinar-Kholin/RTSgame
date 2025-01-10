@@ -20,6 +20,7 @@ import {StartGameFrame} from "./communicationType/frames/startGame.ts";
 import {StartGameObject} from "./EventAggregator/NotificationType/Messages/startGame.ts";
 import {newBoardReceivedFrame, PackageGameBoard} from "./communicationType/frames/newBoardReceived.ts";
 import newBoardMessageObject from "./EventAggregator/NotificationType/newBoardMessageObject.ts";
+import boardChangedEventObject from "./EventAggregator/NotificationType/boardChangeEventObject.ts";
 
 
 export let playerId= uuidToUint32();
@@ -68,11 +69,16 @@ export default function App() {
             EventAggregatorClass.instance.notify(EventTypeEnum.timerEvent, {})
         }, 10);
 
+
+        let timer = Date.now()
         const sendGameBoard: ISubscribe ={
-            Handle: (__notification: object): void =>{
-                const obj = new newBoardReceivedFrame(PackageGameBoard())
-                gameSocket.send(obj.packageDataFrame())
-                console.log(obj)
+            Handle: (notification: object): void =>{
+                console.log("move event")
+                const notif = notification as boardChangedEventObject
+                if (notif.time - timer > 100){ // ograniczenie ruchu po sieci, jedne pakiet na 100 ms
+                    gameSocket.send(new newBoardReceivedFrame(PackageGameBoard()).packageDataFrame())
+                    timer = notif.time
+                }
             }
         }
 

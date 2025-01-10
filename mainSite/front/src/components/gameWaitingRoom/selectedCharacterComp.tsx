@@ -11,6 +11,7 @@ import {EWarrior, MWarrior} from "../../Game/content/characters/mWarrior.ts";
 import EventAggregatorClass, {EventTypeEnum} from "../../EventAggregator/EventAggregatorClass.ts";
 import SpawnCharacterEventObject from "../../EventAggregator/NotificationType/spawnCharacter.ts";
 import {enemyBase, enemyMelee, enemyRange, myBase, myMelee, myRange} from "../../Game/Game.ts";
+import {ERanger, MRanger} from "../../Game/content/characters/mRanger.ts";
 
 
 // type to image
@@ -78,8 +79,21 @@ export default function SelectedCharacterComp(){
             </Box>
             break
         case myRange:
+            const mRanger = fieldContent as MRanger
+            comp = <Box>
+                health := {mRanger.health} &nbsp;
+                damage := {mRanger.attack}&nbsp;
+                range := {mRanger.range}
+            </Box>
             break
         case enemyRange:
+            const eRanger = fieldContent as ERanger
+            comp = <Box>
+                health := {eRanger.health} &nbsp;
+                damage := {eRanger.attack}&nbsp;
+                range := {eRanger.range}
+            </Box>
+
             break
         case myBase:
             comp= <Box>
