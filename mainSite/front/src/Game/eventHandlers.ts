@@ -1,12 +1,25 @@
 import EventAggregatorClass, {EventTypeEnum, ISubscribe} from "../EventAggregator/EventAggregatorClass.ts";
 import LeftClickEventObject, {RightClickEventObject} from "../EventAggregator/NotificationType/clicks.ts";
-import field, {fieldType, fieldTypeEnum} from "./Field.ts";
-import {MWarrior} from "./content/characters/mWarrior.ts";
-import {GameBoard, offsets} from "./Game.ts";
+import field, {fieldType, fieldTypeEnum, IHealthUtils} from "./Field.ts";
+import {EWarrior, MWarrior} from "./content/characters/mWarrior.ts";
+import {
+    cord,
+    enemyBase,
+    enemyMelee, enemyRange, enemyUnitMap,
+    GameBoard,
+    GroundObject,
+    myMelee,
+    myRange,
+    offsets,
+    typeToObject,
+    unitMap
+} from "./Game.ts";
 import {mHeadBase} from "./content/buildings/headBase.ts";
 import SpawnCharacterEventObject from "../EventAggregator/NotificationType/spawnCharacter.ts";
-import {MRanger} from "./content/characters/mRanger.ts";
+import {ERanger, MRanger} from "./content/characters/mRanger.ts";
 import {ICharactersUtils} from "./content/characters/utils.ts";
+import {playerNumber} from "../components/mainSite.tsx";
+import newBoardMessageObject from "../EventAggregator/NotificationType/newBoardMessageObject.ts";
 
 export let fieldSelected: field = new field(fieldType.ground)
 export let character: fieldTypeEnum = fieldType.ground
@@ -33,7 +46,7 @@ export const handleRight: ISubscribe =  {
         const x= Math.floor(notify.x/10) + offsets.offsetX
         const y =Math.floor(notify.y/10) + offsets.offsetY
 
-        if (character === fieldType.mMelee || character === fieldType.mRange){
+        if (character === myMelee || character === myRange){
             // dodajemy przesuwanie jednostki po mapie oczekujące na zdarzenie timer
             //TODO: tutaj zacząć
             // chcemy dodać subskrybenta który będzie przesówał jednostkę
@@ -44,11 +57,20 @@ export const handleRight: ISubscribe =  {
 
 
             let takeTypedObject = (character: field): ICharactersUtils => {
-                if (character.type === fieldType.mMelee){
-                    return character.content as MWarrior
+                if (playerNumber){
+                    if (character.type === myMelee){
+                        return character.content as MWarrior
+                    }else{
+                        return character.content as MRanger
+                    }
                 }else{
-                    return character.content as MRanger
+                    if (character.type === myMelee){
+                        return character.content as EWarrior
+                    }else{
+                        return character.content as ERanger
+                    }
                 }
+
             }
             const char  = takeTypedObject(character)
             if (char.isMoving){
@@ -68,7 +90,7 @@ export const handleRight: ISubscribe =  {
                         return
                     }
                     timer = 0 // wykonanie ruchu
-
+                    // dodać kontrolera poruszania się, ponieważ na razie jednostki mogą wyparowywać oraz
                     const oldX:number = accX
                     const oldY:number = accY
                     if (accX !== x){
@@ -92,20 +114,22 @@ export const handleRight: ISubscribe =  {
                         return
                     }
                     console.log("move")
-                    GameBoard[accX][accY] = GameBoard[oldX][oldY]// przesuwamy jednostkę
-                    GameBoard[oldX][oldY] = new field(fieldType.ground) // to mnie zaboli i to wiem, jednostki nie mogą się przecinać
+                    GameBoard[accX][accY] = GameBoard[oldX][oldY] // przesuwamy jednostkę
+                    GameBoard[oldX][oldY]= GroundObject // to mnie zaboli i to wiem, jednostki nie mogą się przecinać
 
-                    // skoro ruch się wykonał, mogę wysłać dane do serwera o zmianie planszy
-                    EventAggregatorClass.instance.notify(EventTypeEnum.boardChanged, GameBoard[accX][accY])
-                    // jak zarządzać stanem plaszy, nie chemy co plansze tworzyć nowych jednostek, chcemy je przesuwać
-                    // po zmianie planszy wysyłamy gdzie znajdują się wszystkie MOJE jednostki
-                    // przy odbieraniu planszy chcemy zaktualizować plansze, ale nie chcemy tworzyć nowych jednostek
-                    // sprawdzamy jednostki po ich ID, tak by można było śledzić ruch jednostek
 
 
                     if (fieldSelected === character){
                         fieldSelectedCord = [accX, accY]
                     }
+                    unitMap.set(character, [accX, accY]) // stare jest przykrywane nowym
+
+                    // skoro ruch się wykonał, mogę wysłać dane do serwera o zmianie planszy
+                    EventAggregatorClass.instance.notify(EventTypeEnum.boardChanged, {})
+                    // jak zarządzać stanem plaszy, nie chemy co plansze tworzyć nowych jednostek, chcemy je przesuwać
+                    // po zmianie planszy wysyłamy gdzie znajdują się wszystkie MOJE jednostki
+                    // przy odbieraniu planszy chcemy zaktualizować plansze, ale nie chcemy tworzyć nowych jednostek
+                    // sprawdzamy jednostki po ich ID, tak by można było śledzić ruch jednostek
 
                     if ((accX === x && accY === y) || char.stopAction){
                         // zatrzymujemy subskrybenta
@@ -129,12 +153,47 @@ export const handleSpawn: ISubscribe = {
         const x= base.fieldToSpawnTroops[0]
         const y= base.fieldToSpawnTroops[1]
         const newField = new field(notify.characterType)
-        if(notify.characterType === fieldType.mMelee){
-            newField.content = new MWarrior(fieldType.mMelee)
-        }else{
-            newField.content = new MRanger(fieldType.mRange)
-        }
-        GameBoard[x][y] = newField
-    }
+        newField.content = typeToObject[notify.characterType]()
 
+        GameBoard[x][y] = newField
+        unitMap.set(newField, [x,y]) // dodanie jednostki do Mapa
+        // wypadało by poinformować serwer o zmianie planszy
+        EventAggregatorClass.instance.notify(EventTypeEnum.boardChanged, {})
+    }
 }
+
+
+
+
+
+export const handleNewBoardReceived: ISubscribe = {
+    Handle(notification: object): void {
+        const notify = notification as newBoardMessageObject
+        const board = notify.newBoardMessageObject.newBoard
+
+        // czyszczenie boardu z jednostek przeciwnika w celu zaktualizowania ich stanu
+        for (const enemy of enemyUnitMap.keys()) {
+            const cords: cord = enemyUnitMap.get(enemy) as cord
+            GameBoard[cords[0]][cords[1]] = GroundObject
+        }
+        // jednostki przeciwnika wyczyszczone
+        enemyUnitMap.clear()
+
+
+        for (let i = 0; i < board.length; i++){
+            if (board[i].type === enemyBase || board[i].type === enemyMelee || board[i].type === enemyRange){
+                console.log(`${board[i].type}`)
+                const x = board[i].cord[0]
+                const y = board[i].cord[1]
+                const newField = new field(board[i].type)
+                newField.content = typeToObject[board[i].type]() as IHealthUtils
+                newField.setHealth((board[i].content as IHealthUtils).health)
+                GameBoard[x][y] = newField
+                enemyUnitMap.set(newField, [x,y])
+            }
+        }
+
+    }
+}
+
+

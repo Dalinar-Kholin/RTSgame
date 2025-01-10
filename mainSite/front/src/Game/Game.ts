@@ -1,9 +1,13 @@
 import field, {fieldType, fieldTypeEnum} from "./Field.ts";
 import EventAggregatorClass, {EventTypeEnum} from "../EventAggregator/EventAggregatorClass.ts";
-import {handleLeft, handleRight, handleSpawn} from "./eventHandlers.ts";
+import {handleLeft, handleNewBoardReceived, handleRight, handleSpawn} from "./eventHandlers.ts";
+import {playerNumber} from "../components/mainSite.tsx";
+import {EWarrior, MWarrior} from "./content/characters/mWarrior.ts";
+import {ERanger, MRanger} from "./content/characters/mRanger.ts";
+import {eHeadBase, mHeadBase} from "./content/buildings/headBase.ts";
 
 export const gameSize = [256, 256]
-const visibilitySize = [100, 100] // rozmiar jednego pola widzenia
+export const visibilitySize = [100, 100] // rozmiar jednego pola widzenia
 export const charCordEnum: {
     x: number,
     y: number
@@ -12,8 +16,20 @@ export const charCordEnum: {
     y: 0
 }
 
+/*ICOM:
+*   komunikacja między serverem a frontendem, w razie zminay u gracza, gracz wysyła gdzie są wszytkie jego jednostki
+*
+*   na początku gracze widzią wszystko, potem się to może zmieni XD
+* */
+
+export type cord = [number,number]
+
+export let unitMap = new Map<field, cord> // mapa naszych jednostek na planszy
+export let enemyUnitMap = new Map<field, cord> // mapa jednostek przeciwnika na planszy
 
 
+export const GroundObject = new field(fieldType.ground)
+// nie ma po co tworzyć miliona obiektów typu ground, można stworzyć tylko jeden i go kopiować, dla reszty obiektów potrzebujemy unikatów
 
 
 let canvas: HTMLCanvasElement | null = null
@@ -37,6 +53,19 @@ let colorPalette: FieldMap ={
 
 
 export let GameBoard: field[][] = []
+
+export let myMelee = fieldType.mMelee
+export let myRange = fieldType.mRange
+export let myBase = fieldType.mBase
+export let enemyMelee = fieldType.eMelee
+export let enemyRange = fieldType.eRange
+export let enemyBase = fieldType.eBase
+
+export let typeToObject: (() => object)[] = []
+
+
+
+//let BoardToDraw: field[][] = [] // tablica przekazywana przez backend do narysowania
 export let offsets= {
     offsetX: 0,
     offsetY: 0
@@ -97,31 +126,54 @@ export default class Game{
         { length: gameSize[0] },
         () => Array.from(
             { length: gameSize[1] },
-            () => new field(fieldType.ground)
+            () => GroundObject
         )
     );
 
     private constructor() {
-
+        if (playerNumber === 1){
+            myMelee = fieldType.eMelee
+            myRange = fieldType.eRange
+            myBase = fieldType.eBase
+            enemyMelee = fieldType.mMelee
+            enemyRange = fieldType.mRange
+            enemyBase = fieldType.mBase
+            typeToObject[myMelee] = () => {return new EWarrior()}
+            typeToObject[myRange] = () => {return new ERanger()}
+            typeToObject[myBase] = () => {return new eHeadBase(32,32)}
+            typeToObject[enemyMelee] = () => {return new MWarrior()}
+            typeToObject[enemyRange] = () => {return new MRanger()}
+            typeToObject[enemyBase] = () => {return new mHeadBase(12,12)}
+        }else{
+            typeToObject[myMelee] = () => {return new MWarrior()}
+            typeToObject[myRange] = () => {return new MRanger()}
+            typeToObject[myBase] = () => {return new mHeadBase(12,12)}
+            typeToObject[enemyMelee] = () => {return new EWarrior()}
+            typeToObject[enemyRange] = () => {return new ERanger()}
+            typeToObject[enemyBase] = () => {return new eHeadBase(32,32)}
+        }
 
         this.animator = new animator({board: this.gameBoard})
         GameBoard = this.gameBoard
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasRightClick, handleRight)
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasLeftClick, handleLeft)
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.characterSpawned, handleSpawn)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.boardReceived, handleNewBoardReceived)
     } // mamy plansze
 
     public destructor(){
         EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasRightClick, handleRight)
         EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasLeftClick, handleLeft)
         EventAggregatorClass.instance.unSubscribe(EventTypeEnum.characterSpawned, handleSpawn)
+        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.boardReceived, handleNewBoardReceived)
         this.gameBoard = Array.from(
             { length: gameSize[0] },
             () => Array.from(
                 { length: gameSize[1] },
-                () => new field(fieldType.ground)
+                () => GroundObject
             )
         );
+        GameBoard = this.gameBoard
     }
 
 

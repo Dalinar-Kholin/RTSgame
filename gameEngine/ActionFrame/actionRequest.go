@@ -1,7 +1,5 @@
 package ActionFrame
 
-import "fmt"
-
 func RequestFactory(data []byte) IActionRequest {
 	act := Action(data[0])
 
@@ -11,8 +9,9 @@ func RequestFactory(data []byte) IActionRequest {
 	case Empty:
 		return NewNilFrame()
 	case StartGame:
-		fmt.Printf("StartGame package made\n")
 		return NewStartGameRequest()
+	case NewBoard:
+		return NewBoardFromUintArr(data)
 	default:
 		return NilFromUintArr()
 	}

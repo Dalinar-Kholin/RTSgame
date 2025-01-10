@@ -1,4 +1,4 @@
-import {fieldTypeEnum} from "../../Field.ts";
+import {fieldType, fieldTypeEnum} from "../../Field.ts";
 import {ICharactersUtils} from "./utils.ts";
 
 const warriorStats={
@@ -8,7 +8,7 @@ const warriorStats={
 }
 
 export class defaultWarrior implements ICharactersUtils{
-    attack: number
+    attack: number // atack domyślny
     health: number
     range: number
     isMoving: boolean = false
@@ -32,13 +32,13 @@ export class defaultWarrior implements ICharactersUtils{
 
 
 export class MWarrior extends defaultWarrior{
-    constructor(type : fieldTypeEnum) {
-        super(type);
+    constructor() {
+        super(fieldType.mMelee);
     }
 }
 
 export class EWarrior extends defaultWarrior{
-    constructor(type : fieldTypeEnum) {
-        super(type);
+    constructor() {
+        super(fieldType.mMelee);
     }
 }

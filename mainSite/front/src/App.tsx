@@ -18,9 +18,13 @@ import {ServerMessageFrame} from "./communicationType/frames/serverMessageFrame.
 import ServerMessageReceivedObject from "./EventAggregator/NotificationType/Messages/serverMessageReceived.ts";
 import {StartGameFrame} from "./communicationType/frames/startGame.ts";
 import {StartGameObject} from "./EventAggregator/NotificationType/Messages/startGame.ts";
+import {newBoardReceivedFrame, PackageGameBoard} from "./communicationType/frames/newBoardReceived.ts";
+import newBoardMessageObject from "./EventAggregator/NotificationType/newBoardMessageObject.ts";
 
 
 export let playerId= uuidToUint32();
+
+
 
 function uuidToUint32(): number {
     const uuid = uuidv4(); // Generowanie UUID
@@ -46,15 +50,14 @@ export default function App() {
 
     useEffect(() => {
         // register message sender notify for sending message to backend
-        let messageSender: ISubscribe = {
+        const messageSender: ISubscribe = {
             Handle: (notification: object): void => {
                 const notif  = (notification as MessageSentEventObject)
-                console.log("ogg?")
                 gameSocket.send(new DataMessageFrame(notif.message).packageDataFrame())
             }
         }
 
-        let gameStart: ISubscribe = {
+        const gameStart: ISubscribe = {
             Handle: (__notification: object): void => {
                 gameSocket.send(new StartGameFrame().packageDataFrame())
             }
@@ -65,13 +68,22 @@ export default function App() {
             EventAggregatorClass.instance.notify(EventTypeEnum.timerEvent, {})
         }, 10);
 
+        const sendGameBoard: ISubscribe ={
+            Handle: (__notification: object): void =>{
+                const obj = new newBoardReceivedFrame(PackageGameBoard())
+                gameSocket.send(obj.packageDataFrame())
+                console.log(obj)
+            }
+        }
 
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.MessageSentEvent, messageSender)
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.startGameSent, gameStart)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.boardChanged, sendGameBoard)
         return ()=>{
             clearInterval(intervalId);
             EventAggregatorClass.instance.unSubscribe(EventTypeEnum.MessageSentEvent, messageSender)
             EventAggregatorClass.instance.unSubscribe(EventTypeEnum.startGameSent, gameStart)
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.boardChanged, sendGameBoard)
         }
 
     }, []);
@@ -80,7 +92,9 @@ export default function App() {
         gameSocket.onmessage = (e)=>{
             if (e.data instanceof ArrayBuffer){
                 let frame = Parser.instance.parse(new Uint8Array(e.data))
-                if (frame instanceof DataMessageFrame){
+                if (frame instanceof newBoardReceivedFrame){
+                    EventAggregatorClass.instance.notify(EventTypeEnum.boardReceived, new newBoardMessageObject(frame)) // dostaliśmy nową planszę od servera
+                }else if (frame instanceof DataMessageFrame){
                     EventAggregatorClass.instance.notify(EventTypeEnum.MessageReceivedEvent, new MessageReceivedEventObject(frame.message))
                 }else if (frame instanceof AttackDataFrame){
                     EventAggregatorClass.instance.notify(EventTypeEnum.AttackEvent, new AttackEvent(10,11))

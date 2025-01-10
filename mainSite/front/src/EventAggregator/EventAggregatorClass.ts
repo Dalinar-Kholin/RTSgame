@@ -14,7 +14,8 @@ export const EventTypeEnum = { // wszystkie możliwe typy powiadomień
     timerEvent: 8,
     changeCharacter: 9,
     boardChanged: 10,
-    characterSpawned: 11,
+    boardReceived: 11,
+    characterSpawned: 12,
 }
 
 

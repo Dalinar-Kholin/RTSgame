@@ -9,11 +9,11 @@ const (
 	Build         = Action(3)
 	ServerMessage = Action(4)
 	StartGame     = Action(5)
+	NewBoard      = Action(6)
 )
 
 type IActionRequest interface {
 	ToUint8Arr() []uint8
 	GetAction() Action
-	GetUserId() string
 	GetData() []uint8
 }

@@ -1,4 +1,4 @@
-import {fieldTypeEnum} from "../../Field.ts";
+import {fieldType, fieldTypeEnum} from "../../Field.ts";
 import {ICharactersUtils} from "./utils.ts";
 
 const warriorStats={
@@ -13,7 +13,7 @@ export class defaultRanger implements ICharactersUtils{
     range: number
     isMoving: boolean = false
     stopAction: boolean = false
-    speed: number = 15 // szybkość jednostki, ile tików timera zajmuje jej przejście do następnego pola
+    speed: number = 2 // szybkość jednostki, ile tików timera zajmuje jej przejście do następnego pola
     type: fieldTypeEnum
     constructor(type : fieldTypeEnum) {
         this.attack = warriorStats.attack
@@ -32,13 +32,13 @@ export class defaultRanger implements ICharactersUtils{
 
 
 export class MRanger extends defaultRanger{
-    constructor(type : fieldTypeEnum) {
-        super(type);
+    constructor() {
+        super(fieldType.mRange);
     }
 }
 
 export class ERanger extends defaultRanger{
-    constructor(type : fieldTypeEnum) {
-        super(type);
+    constructor() {
+        super(fieldType.eRange);
     }
 }

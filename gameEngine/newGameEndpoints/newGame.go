@@ -59,12 +59,14 @@ func (g *GameEndpoints) GamesToJoin(c *gin.Context) {
 func (g *GameEndpoints) NewGame(c *gin.Context) {
 	playerId, err := strconv.Atoi(c.Request.URL.Query().Get("playerId"))
 	gameId, _ := uuid.NewUUID()
+
 	game := NewGame{GameId: int32(gameId.ID()), FirstPlayerId: int32(playerId), SecondPlayerId: 0, PlayersInGame: 1}
 	item, err := attributevalue.MarshalMap(game)
 	connectionHub.IdToGameId[int32(playerId)] = game.GameId
 	_, err = g.Svc.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		TableName: aws.String(gameDb), Item: item,
 	})
+	connectionHub.InitGame(int32(playerId), game.GameId)
 	if err != nil {
 		panic(err)
 	}
@@ -91,6 +93,7 @@ func (g *GameEndpoints) JoinGame(c *gin.Context) {
 	}
 
 	connectionHub.IdToGameId[playerId] = int32(gameId)
+	connectionHub.GamesHub[int32(gameId)].AddSecondPlayer(playerId)
 	// zestawienie połączeń tak by player
 	// playerOne --> playerTwo oraz
 	// playerTwo --> playerOne

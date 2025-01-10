@@ -2,13 +2,14 @@ import ChatComp from "./chatComp.tsx";
 import {Box, Button} from "@mui/material";
 import {useLocation, useNavigate} from "react-router-dom";
 import GameComp from "../gameComp/gameComp.tsx";
-import Game, {GameBoard} from "../../Game/Game.ts";
+import Game, {GameBoard, unitMap} from "../../Game/Game.ts";
 import {useEffect, useState} from "react";
 import EventAggregatorClass, {EventTypeEnum, ISubscribe} from "../../EventAggregator/EventAggregatorClass.ts";
 import {StartGameObject} from "../../EventAggregator/NotificationType/Messages/startGame.ts";
 import ServerMessageReceivedObject from "../../EventAggregator/NotificationType/Messages/serverMessageReceived.ts";
 import field, {fieldType} from "../../Game/Field.ts";
-import {mHeadBase} from "../../Game/content/buildings/headBase.ts";
+import {eHeadBase, mHeadBase} from "../../Game/content/buildings/headBase.ts";
+import {playerNumber} from "../mainSite.tsx";
 
 
 interface IGameWaitingRoom{
@@ -61,17 +62,21 @@ export default function GameWaitingRoom({gameId}:IGameWaitingRoom ){
     }, []);
 
     if (isEnemyReady && isPlayerReady){
-        Game.instance.startAnimating()
-        // spawnowanie sowjej bazy
-        const newField = new field(fieldType.mBase)
-        newField.content = new mHeadBase(19,19)
-        GameBoard[20][20] = newField
-        GameBoard[21][20] = newField
-        GameBoard[22][20] = newField
-        GameBoard[20][21] = newField
-        GameBoard[21][21] = newField
-        GameBoard[22][21] = newField
 
+        // spawnowanie sowjej bazy
+        const newField = new field(playerNumber===0 ? fieldType.mBase : fieldType.eBase)
+        const baseCords = playerNumber===0 ? 10 : 30
+
+        newField.content = playerNumber===0? new mHeadBase(baseCords+2,baseCords+2) : new eHeadBase(baseCords+2,baseCords+2)
+        GameBoard[baseCords][baseCords] = newField
+        unitMap.set(newField, [baseCords,baseCords])
+        /*GameBoard[baseCords + 1][baseCords] = newField
+        GameBoard[baseCords +2][baseCords] = newField
+        GameBoard[baseCords][baseCords +1] = newField
+        GameBoard[baseCords + 1][baseCords +1] = newField
+        GameBoard[baseCords + 2 ][baseCords +1] = newField*/
+        EventAggregatorClass.instance.notify(EventTypeEnum.boardChanged, {})
+        Game.instance.startAnimating()
     }
 
     return(

@@ -15,6 +15,10 @@ interface ISetCharacter{
     type: fieldTypeEnum
 }
 
+export interface IHealthUtils{
+    health: number
+}
+
 export default class field{
     type: fieldTypeEnum
     content: object | null = null
@@ -25,5 +29,12 @@ export default class field{
     setCharacter(character: ISetCharacter){
         this.type = character.type
         this.content = character
+    }
+    setHealth(health: number){
+        if (this.content !== null){
+            const newObj = this.content as IHealthUtils
+            newObj.health = health
+            this.content= newObj
+        }
     }
 }

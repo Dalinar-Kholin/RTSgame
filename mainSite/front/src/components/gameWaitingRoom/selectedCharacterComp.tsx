@@ -10,6 +10,7 @@ import {Box, Button} from "@mui/material";
 import {EWarrior, MWarrior} from "../../Game/content/characters/mWarrior.ts";
 import EventAggregatorClass, {EventTypeEnum} from "../../EventAggregator/EventAggregatorClass.ts";
 import SpawnCharacterEventObject from "../../EventAggregator/NotificationType/spawnCharacter.ts";
+import {enemyBase, enemyMelee, enemyRange, myBase, myMelee, myRange} from "../../Game/Game.ts";
 
 
 // type to image
@@ -60,7 +61,7 @@ export default function SelectedCharacterComp(){
     let comp = <></>
 
     switch (myCharacter) {
-        case fieldType.mMelee:
+        case myMelee:
             const mMelee = fieldContent as MWarrior
             comp = <Box>
                         health := {mMelee.health} &nbsp;
@@ -68,7 +69,7 @@ export default function SelectedCharacterComp(){
                         range := {mMelee.range}
                     </Box>
             break
-        case fieldType.eMelee:
+        case enemyMelee:
             const eMelee = fieldContent as EWarrior
             comp = <Box sx={{display: "flex", flexDirection: "column"}}>
                 <>health := {eMelee.health}</>
@@ -76,17 +77,20 @@ export default function SelectedCharacterComp(){
                 <>range := {eMelee.range}</>
             </Box>
             break
-        case fieldType.mRange:
+        case myRange:
             break
-        case fieldType.eRange:
+        case enemyRange:
             break
-        case fieldType.mBase:
+        case myBase:
             comp= <Box>
-                <Button onClick={() => { EventAggregatorClass.instance.notify(EventTypeEnum.characterSpawned,new SpawnCharacterEventObject(fieldType.mMelee))}}>warrior</Button>
-                <Button onClick={() => { EventAggregatorClass.instance.notify(EventTypeEnum.characterSpawned,new SpawnCharacterEventObject(fieldType.mRange))}}>ranger</Button>
+                <Button onClick={() => { EventAggregatorClass.instance.notify(EventTypeEnum.characterSpawned,new SpawnCharacterEventObject(myMelee))}}>warrior</Button>
+                <Button onClick={() => { EventAggregatorClass.instance.notify(EventTypeEnum.characterSpawned,new SpawnCharacterEventObject(myRange))}}>ranger</Button>
             </Box>
-
-
+            break
+        case enemyBase:
+            comp = <>
+                not sigma -- ligma
+            </>
     }
 
     return(

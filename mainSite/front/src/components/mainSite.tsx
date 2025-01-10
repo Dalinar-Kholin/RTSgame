@@ -24,6 +24,9 @@ interface IMainSite{
     setGameId : (n : number) => void
 }
 
+export let playerNumber: number = 0
+
+
 export default function MainSite({setGameId}: IMainSite) {
     // Obsługa zdarzenia otwarcia połączenia
     const [gamesToJoin, setGamesToJoin] = useState<IGamesToJoin[]>([])
@@ -69,8 +72,8 @@ export default function MainSite({setGameId}: IMainSite) {
                     return res.json()
                 }).then(
                     (data: newGame) => {
-                        console.log("" + data.gameId)
                         setGameId(data.gameId)
+                        playerNumber = 0
                         navigate("/gameWaitingRoom", {state: {isMade: true}})
                     }
                 )
@@ -86,6 +89,7 @@ export default function MainSite({setGameId}: IMainSite) {
                                         throw new Error("chuj nie działa")
                                     } else {
                                         setGameId(g.GameId)
+                                        playerNumber = 1
                                         navigate("/gameWaitingRoom", {state: {isMade: false}})
                                     }
                                 }

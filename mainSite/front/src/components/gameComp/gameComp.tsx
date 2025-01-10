@@ -1,5 +1,5 @@
 import {useEffect} from "react";
-import Game, {charCordEnum, GameBoard, gameSize, offsets} from "../../Game/Game.ts";
+import Game, {charCordEnum, GameBoard, gameSize, offsets, visibilitySize} from "../../Game/Game.ts";
 import EventAggregatorClass, {EventTypeEnum} from "../../EventAggregator/EventAggregatorClass.ts";
 import {gameServerURL} from "../../consts.ts";
 import {playerId} from "../../App.tsx";
@@ -76,10 +76,9 @@ export default function GameComp({gameId} : IGameComp){
                     console.log(e.key.toLowerCase())
                     switch (e.key.toLowerCase()) {
                         case "d":
-                            if (offsets.offsetX < gameSize[0]-1){
+                            if (offsets.offsetX < gameSize[0]- visibilitySize[0]){
                                 offsets.offsetX += 1
                             }
-                            console.log("essa")
                             break
                         case "a":
                             if (offsets.offsetX > 0){
@@ -87,7 +86,7 @@ export default function GameComp({gameId} : IGameComp){
                             }
                             break
                         case "s":
-                            if (offsets.offsetY < gameSize[1]-1){
+                            if (offsets.offsetY < gameSize[1] -  visibilitySize[1]){
                                 offsets.offsetY += 1
                             }
                             break
@@ -98,7 +97,7 @@ export default function GameComp({gameId} : IGameComp){
                             break
                         case "q":
                             const newField = new field(fieldType.mMelee)
-                            newField.content = new MWarrior(fieldType.mMelee)
+                            newField.content = new MWarrior()
                             GameBoard[10][10] = newField
                             break
                     }

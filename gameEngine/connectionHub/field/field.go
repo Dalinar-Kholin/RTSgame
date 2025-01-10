@@ -1,6 +1,6 @@
 package field
 
-type FieldType int32
+type FieldType uint32
 
 const (
 	P1Melee = FieldType(0)
@@ -12,22 +12,27 @@ const (
 	P2Base  = FieldType(6)
 )
 
+var (
+	EmptyFieldObject = &Field{Data: Empty, Health: 0}
+)
+
 type Field struct {
-	Data FieldType
+	Data   FieldType
+	Health uint16
 }
 
 type Base struct {
-	Health int32
+	Health uint32
 }
 
 type Range struct {
-	Health int32
-	Attack int32
-	Range  int32
+	Health uint32
+	/*Attack int32 to nie ma znaczenia, wystarczy pamiętać te dane dla klasy a nie dla instancji
+	Range  int32*/
 }
 
 type Melee struct {
-	Health int32
-	Attack int32
-	Range  int32
+	Health uint32
+	/*Attack int32 to nie ma znaczenia
+	Range  int32*/
 }
