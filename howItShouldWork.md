@@ -25,31 +25,30 @@ na cloud Computing
 jak ma to działać
 
 backend
-jesteśmy połączeni socketami z obydwoma graczami
 
-komunikacja z backendem jest robiona za pomocą raw obiektów o typach Pakietów(pakiet ataku, pakiet budowy)
+przy połączeniu się z serwerem otwieramy połączenie webSocket, na razie nie jesteśmy połączeni z żadnym graczem
 
+pobieramy aktywne pokoje gier, do których możemy wejść, jednocześnie łącząc się webSocketem z użytkownikiem w tym pokoju, możemy wysyłać sobie IRT wiadomości tekstowe
 
-ustalamy tickrate serwera na 100
+każdy z graczy wysyła pakiet start Game, gra się zaczyna
 
-co 10ms otrzymujemy od użytkownika informacje o akcjach danego gracza
+przesyłanie danych gry między frontendem a backendem odbywa się za pomocą webSocket, gdzie dane przesyłane są w formie binarnej, w predefiniowanych Ramkach danych
+nazywanych Frame i zdefiniowanych w katalogu ActionFrame
 
-co 10ms wysyłamy userowi dane o które prosi np
- - atak na dane jednostki
- - budowa danego budynku
- - odkrycie terenu
-
-server przetrzymuje stan gry i na podstawie inputów i zapytań graczy zwraca im informacje na temat gry
-server będzie validował czy dana akcja jest wykonwywalna
+serwer nie ingeruje w przesyłane dane, ufamy użytkownikom że nie oszukują
 
 
+gracz przesyła dane gdy coś się zmini i odbiera dane gdy coś się zmieni - zminimalizowane transferu danych po łączu
 
-zakładam że przy pingu 30 to nie będzie problem - pakietu powinny być szybkie
 
 jak działa frontend
 
-frontend jest taktowany zegrem 10 ms do którego można rejestrować akcje
- - idź jednostką z pola \[0,0] na pole \[5,5] akcją jest co powiedźmy sekundę przemieścić w stronę docelową a w przypadku dojścia do celu wyrejestrować akcje
- - każdy cykl zegara będzie przekazywał dane serverowi i odbierał dane od servera
+gra chodzi na canvas gdzie rysowana jest aktualna część mapy gry
 
-jak handlować informacjami graczy??? 
+wszystkie wydarzenia w grze i całym frontendzdie przechodzą przez EventAggregatora który jest singletonem
+gra reaguje na zachowania graczy emitując spredefiniowane eventy, które następnie odbierane są przez zarejestrowanych słuchaczy danego eventu
+
+niestety TypeScript nie pozwala na składnie EA jak w C# gdzie już klasa wydarzenia może być mapowana na słuchacza
+więc musimy stworzyć enumerator eventów
+
+
