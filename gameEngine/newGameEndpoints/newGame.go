@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"log"
 	"strconv"
+	"sync"
 )
 
 type GameEndpoints struct {
@@ -28,12 +29,14 @@ type NewGame struct {
 	PlayersInGame  int32 `dynamodbav:"playersInGame"`
 }
 
+var gamesLock = make(map[int32]*sync.Mutex)
+
 // GamesToJoin pokaż dostępne gry do których można dołączyć
 func (g *GameEndpoints) GamesToJoin(c *gin.Context) {
 	var games []NewGame
 	var err error
 	input := &dynamodb.ScanInput{
-		TableName:        aws.String(gameDb),
+		TableName:        aws.String(GameDb),
 		FilterExpression: aws.String("secondPlayerId = :value"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":value": &types.AttributeValueMemberN{Value: "0"},
@@ -59,12 +62,15 @@ func (g *GameEndpoints) GamesToJoin(c *gin.Context) {
 func (g *GameEndpoints) NewGame(c *gin.Context) {
 	playerId, err := strconv.Atoi(c.Request.URL.Query().Get("playerId"))
 	gameId, _ := uuid.NewUUID()
-
 	game := NewGame{GameId: int32(gameId.ID()), FirstPlayerId: int32(playerId), SecondPlayerId: 0, PlayersInGame: 1}
+
+	fmt.Printf("wartość klucza %v\n", int32(gameId.ID()))
+	gamesLock[int32(gameId.ID())] = &sync.Mutex{} // inicjowanie blokady synchronizacji gry
+
 	item, err := attributevalue.MarshalMap(game)
 	connectionHub.IdToGameId[int32(playerId)] = game.GameId
 	_, err = g.Svc.PutItem(context.TODO(), &dynamodb.PutItemInput{
-		TableName: aws.String(gameDb), Item: item,
+		TableName: aws.String(GameDb), Item: item,
 	})
 	connectionHub.InitGame(int32(playerId), game.GameId)
 	if err != nil {
@@ -91,7 +97,17 @@ func (g *GameEndpoints) JoinGame(c *gin.Context) {
 		})
 		return
 	}
-
+	fmt.Printf("do czego się odnosimy := %v\n", int32(gameId))
+	mutex := gamesLock[int32(gameId)]
+	if mutex == nil || mutex.TryLock() == false {
+		fmt.Printf("mutex val := %v\n", mutex)
+		c.JSON(400, gin.H{
+			"result": "game is locked",
+		})
+		return
+	}
+	// try lock samo w sobie zajmuję blokadę
+	defer mutex.Unlock()
 	connectionHub.IdToGameId[playerId] = int32(gameId)
 	connectionHub.GamesHub[int32(gameId)].AddSecondPlayer(playerId)
 	// zestawienie połączeń tak by player
@@ -101,7 +117,7 @@ func (g *GameEndpoints) JoinGame(c *gin.Context) {
 	res, err := g.Svc.GetItem(
 		context.Background(),
 		&dynamodb.GetItemInput{
-			TableName: aws.String(gameDb),
+			TableName: aws.String(GameDb),
 			Key: map[string]types.AttributeValue{
 				"_id": &types.AttributeValueMemberN{Value: strconv.Itoa(gameId)},
 			}})
@@ -130,7 +146,7 @@ func (g *GameEndpoints) JoinGame(c *gin.Context) {
 		return
 	}
 	_, err = g.Svc.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
-		TableName: aws.String(gameDb),
+		TableName: aws.String(GameDb),
 		Key: map[string]types.AttributeValue{
 			"_id": &types.AttributeValueMemberN{Value: strconv.Itoa(gameId)},
 		},
@@ -148,14 +164,16 @@ func (g *GameEndpoints) JoinGame(c *gin.Context) {
 
 // przed join game kanały ustawione są tak że map[playerOneId] = chan playerOne
 // po join game ustawione są map[playerOneId] = chan playerTwo
-
 func (g *GameEndpoints) LeaveGame(c *gin.Context) {
 	gameId, err := strconv.Atoi(c.Request.URL.Query().Get("gameId"))     // to jest ID gry
 	playerId, err := strconv.Atoi(c.Request.URL.Query().Get("playerId")) // to jest ID playera
+	mutex := gamesLock[int32(gameId)]
+	mutex.Lock()
+	defer mutex.Unlock()
 	res, err := g.Svc.GetItem(
 		context.Background(),
 		&dynamodb.GetItemInput{
-			TableName: aws.String(gameDb),
+			TableName: aws.String(GameDb),
 			Key: map[string]types.AttributeValue{
 				"_id": &types.AttributeValueMemberN{Value: strconv.Itoa(gameId)},
 			}})
@@ -172,7 +190,7 @@ func (g *GameEndpoints) LeaveGame(c *gin.Context) {
 
 	if result.PlayersInGame == 1 { //w grze jest tylko jeden gracz który chce opóścić grę, czyli grę należało by usunąć
 		_, err = g.Svc.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
-			TableName: aws.String(gameDb),
+			TableName: aws.String(GameDb),
 			Key: map[string]types.AttributeValue{
 				"_id": &types.AttributeValueMemberN{Value: strconv.Itoa(gameId)},
 			},
@@ -203,7 +221,7 @@ func (g *GameEndpoints) LeaveGame(c *gin.Context) {
 		return
 	}
 	_, err = g.Svc.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
-		TableName: aws.String(gameDb),
+		TableName: aws.String(GameDb),
 		Key: map[string]types.AttributeValue{
 			"_id": &types.AttributeValueMemberN{Value: strconv.Itoa(gameId)},
 		},

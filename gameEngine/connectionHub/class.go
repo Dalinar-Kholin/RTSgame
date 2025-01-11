@@ -21,6 +21,7 @@ var Hub = ConnectionHub{
 }
 
 type ConnectionHub struct {
+	// Svc            *dynamodb.Client
 	socketPool     atomic.Int32
 	senderChanel   map[int32]chan ActionFrame.IActionRequest
 	receiverChanel chan CommunicationFrame
@@ -35,6 +36,7 @@ type Game struct {
 
 var IdToGameId = make(map[int32]int32)
 var GamesHub = make(map[int32]*Game)
+var GameHubLock sync.Mutex
 
 func InitGame(firstPlayerId int32, gameId int32) {
 	game := Game{
@@ -72,11 +74,17 @@ func (h *ConnectionHub) IterpretConnections() {
 				break
 			case *ActionFrame.SpawnAllay:
 				allay := data.(*ActionFrame.SpawnAllay)
+				GameHubLock.Lock()
 				GamesHub[IdToGameId[frame.Receiver]].fields[allay.Cord[0]][allay.Cord[1]].Data = allay.AllayType
+				GameHubLock.Unlock()
 			case *ActionFrame.NewBoardFrame:
 				newBoard := data.(*ActionFrame.NewBoardFrame)
+				GameHubLock.Lock()
 				game := GamesHub[IdToGameId[frame.Receiver]]
-
+				GameHubLock.Unlock()
+				if game == nil {
+					return
+				}
 				playerNumber := 0
 				if game.players[0] != frame.Receiver {
 					playerNumber = 1
@@ -128,6 +136,30 @@ func (h *ConnectionHub) IterpretConnections() {
 
 				Hub.senderChanel[game.players[0]] <- newMapForFronted
 				Hub.senderChanel[game.players[1]] <- newMapForFronted
+			case *ActionFrame.AttackRequest:
+				attack := data.(*ActionFrame.AttackRequest)
+				receiverChannel <- attack
+			case *ActionFrame.EndGameRequest: // enumeracja końca gry
+				endGame := data.(*ActionFrame.EndGameRequest)
+				gameId := IdToGameId[frame.Receiver]
+				game := GamesHub[gameId]
+				if game == nil {
+					fmt.Printf("why error?\n")
+					return
+				}
+				game.lock.Lock()
+				Hub.senderChanel[game.players[0]] <- endGame
+				Hub.senderChanel[game.players[1]] <- endGame
+				game.lock.Unlock()
+				GameHubLock.Lock()
+				delete(GamesHub, IdToGameId[frame.Receiver])
+				GameHubLock.Unlock()
+				/*h.Svc.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
+					TableName: aws.String(newGameEndpoints.GameDb),
+					Key: map[string]types.AttributeValue{
+						"_id": &types.AttributeValueMemberN{Value: strconv.Itoa(int(gameId))},
+					},
+				})*/
 
 			default:
 				panic("nierozpoznany typ ramki")

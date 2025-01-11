@@ -12,6 +12,7 @@ import EventAggregatorClass, {EventTypeEnum} from "../../EventAggregator/EventAg
 import SpawnCharacterEventObject from "../../EventAggregator/NotificationType/spawnCharacter.ts";
 import {enemyBase, enemyMelee, enemyRange, myBase, myMelee, myRange} from "../../Game/Game.ts";
 import {ERanger, MRanger} from "../../Game/content/characters/mRanger.ts";
+import {eHeadBase, mHeadBase} from "../../Game/content/buildings/headBase.ts";
 
 
 // type to image
@@ -49,13 +50,6 @@ export default function SelectedCharacterComp(){
         }
     }, []); // chcemy zasubskrybować event aggregatora na change character
 
-    /*useEffect(() => {
-        setMyCharacter(character)
-        setMyFieldSelected(fieldSelected)
-    }, [character, fieldSelected]) w ogólności nie działa XDDD*/
-    // skoro nie jest groundem to musi być jednnostką ze statystykami które chcemy wyświetlić graczowi
-
-
 
     const fieldContent = myFieldSelected.content
 
@@ -65,44 +59,46 @@ export default function SelectedCharacterComp(){
         case myMelee:
             const mMelee = fieldContent as MWarrior
             comp = <Box>
-                        health := {mMelee.health} &nbsp;
-                        damage := {mMelee.attack}&nbsp;
-                        range := {mMelee.range}
+                        health := {mMelee.takeStatHealth()} &nbsp;
+                        damage := {mMelee.takeStatAttack()}&nbsp;
                     </Box>
             break
         case enemyMelee:
             const eMelee = fieldContent as EWarrior
             comp = <Box sx={{display: "flex", flexDirection: "column"}}>
-                <>health := {eMelee.health}</>
-                <>damage := {eMelee.attack}</>
-                <>range := {eMelee.range}</>
+                <>health := {eMelee.takeStatHealth()}</>
+                <>damage := {eMelee.takeStatAttack()}</>
             </Box>
             break
         case myRange:
             const mRanger = fieldContent as MRanger
             comp = <Box>
-                health := {mRanger.health} &nbsp;
-                damage := {mRanger.attack}&nbsp;
-                range := {mRanger.range}
+                health := {mRanger.takeStatHealth()} &nbsp;
+                damage := {mRanger.takeStatAttack()}&nbsp;
             </Box>
             break
         case enemyRange:
             const eRanger = fieldContent as ERanger
             comp = <Box>
                 health := {eRanger.health} &nbsp;
-                damage := {eRanger.attack}&nbsp;
-                range := {eRanger.range}
+                damage := {eRanger.takeStatAttack()}&nbsp;
             </Box>
 
             break
         case myBase:
+            const mBase = fieldContent as mHeadBase
+
             comp= <Box>
                 <Button onClick={() => { EventAggregatorClass.instance.notify(EventTypeEnum.characterSpawned,new SpawnCharacterEventObject(myMelee))}}>warrior</Button>
                 <Button onClick={() => { EventAggregatorClass.instance.notify(EventTypeEnum.characterSpawned,new SpawnCharacterEventObject(myRange))}}>ranger</Button>
+                {mBase.health}
             </Box>
+
             break
         case enemyBase:
+            const eBase = fieldContent as eHeadBase
             comp = <>
+                {eBase.health}
                 not sigma -- ligma
             </>
     }

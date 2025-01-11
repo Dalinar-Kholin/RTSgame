@@ -1,7 +1,6 @@
 import EventAggregatorClass, {EventTypeEnum, ISubscribe} from "../EventAggregator/EventAggregatorClass.ts";
 import LeftClickEventObject, {RightClickEventObject} from "../EventAggregator/NotificationType/clicks.ts";
 import field, {fieldType, fieldTypeEnum, IHealthUtils} from "./Field.ts";
-import {EWarrior, MWarrior} from "./content/characters/mWarrior.ts";
 import {
     cord,
     enemyBase,
@@ -16,15 +15,20 @@ import {
 } from "./Game.ts";
 import {mHeadBase} from "./content/buildings/headBase.ts";
 import SpawnCharacterEventObject from "../EventAggregator/NotificationType/spawnCharacter.ts";
-import {ERanger, MRanger} from "./content/characters/mRanger.ts";
 import {ICharactersUtils} from "./content/characters/utils.ts";
-import {playerNumber} from "../components/mainSite.tsx";
 import newBoardMessageObject from "../EventAggregator/NotificationType/newBoardMessageObject.ts";
 import boardChangedEventObject from "../EventAggregator/NotificationType/boardChangeEventObject.ts";
+import AttackEventObject from "../EventAggregator/NotificationType/attackEvent.ts";
+import {EndGame} from "../communicationType/frames/EndGame.ts";
+import {playerNumber} from "../components/mainSite.tsx";
 
 export let fieldSelected: field = new field(fieldType.ground)
 export let character: fieldTypeEnum = fieldType.ground
-export let fieldSelectedCord: number[] = [0,0]
+
+export function serFieldSelectedCord(x: number, y:number): void {
+    fieldSelectedCord = [x,y]
+}
+export let fieldSelectedCord: cord = [0,0]
 
 
 
@@ -50,95 +54,9 @@ const moveCharacter = (x: number, y: number): void => {
 
     // chcemy móc sprawdzić czy obecnie wybrana jednostka to ta którą przesówamy, aby w razie czego
     // móc zmieniać dynamicznie fieldSelcetedCord
-    const character = fieldSelected
 
-
-    let takeTypedObject = (character: field): ICharactersUtils => {
-        if (playerNumber){
-            if (character.type === myMelee){
-                return character.content as MWarrior
-            }else{
-                return character.content as MRanger
-            }
-        }else{
-            if (character.type === myMelee){
-                return character.content as EWarrior
-            }else{
-                return character.content as ERanger
-            }
-        }
-
-    }
-    const char  = takeTypedObject(character)
-    if (char.isMoving){
-        char.stopAction = true
-        return
-    }
-    char.isMoving = true
-    let accX: number = fieldSelectedCord[0]
-    let accY: number = fieldSelectedCord[1] // chcemy móc śledzić gdzie jest wybrana jednostka, wczasie może się to zminieać
-    let timer = 0
-
-    const mover: ISubscribe = {
-        Handle(__notification: object): void {
-            // wywoływane tylko poprzez timer, który nie ma obiektu, liczy się sam event
-            if (timer < char.speed){ // im mniejsza wartość tym szybciej jednostka chodzi
-                timer++
-                return
-            }
-            timer = 0 // wykonanie ruchu
-            // dodać kontrolera poruszania się, ponieważ na razie jednostki mogą wyparowywać oraz
-            const oldX:number = accX
-            const oldY:number = accY
-            if (accX !== x){
-                if (accX < x){
-                    accX++
-
-                }else{
-                    accX--
-                }
-            }
-
-            if (accY !== y){
-                if (accY < y){
-                    accY++
-                }else{
-                    accY--
-                }
-            }
-            if (GameBoard[accX][accY].type !== fieldType.ground){
-                timer = char.speed// czekamy aż droga się zwolni, nie zabierając całego ruchu
-                return
-            }
-
-            GameBoard[accX][accY] = GameBoard[oldX][oldY] // przesuwamy jednostkę
-            GameBoard[oldX][oldY]= GroundObject // to mnie zaboli i to wiem, jednostki nie mogą się przecinać
-
-
-
-            if (fieldSelected === character){
-                fieldSelectedCord = [accX, accY]
-            }
-            unitMap.set(character, [accX, accY]) // stare jest przykrywane nowym
-
-            // skoro ruch się wykonał, mogę wysłać dane do serwera o zmianie planszy
-            EventAggregatorClass.instance.notify(EventTypeEnum.boardChanged, new boardChangedEventObject(Date.now()))
-            // jak zarządzać stanem plaszy, nie chemy co plansze tworzyć nowych jednostek, chcemy je przesuwać
-            // po zmianie planszy wysyłamy gdzie znajdują się wszystkie MOJE jednostki
-            // przy odbieraniu planszy chcemy zaktualizować plansze, ale nie chcemy tworzyć nowych jednostek
-            // sprawdzamy jednostki po ich ID, tak by można było śledzić ruch jednostek
-
-            if ((accX === x && accY === y) || char.stopAction){
-                // zatrzymujemy subskrybenta
-                char.stopAction = false
-                char.isMoving = false
-                EventAggregatorClass.instance.unSubscribe(EventTypeEnum.timerEvent, this)
-            }
-
-        }
-    }
-
-    EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.timerEvent, mover)
+    const mover = fieldSelected.content as ICharactersUtils
+    mover.moveUnit(x, y, () => console.log("koniec ruchu"))
 }
 
 
@@ -148,8 +66,22 @@ const moveCharacter = (x: number, y: number): void => {
 // na razie mamy jednak Polskie gówno
 // po ataku przechodzimy na pole umożliwiające atak a następnie zabieramy hp
 // jeżeli umarła, następuje kasacja
-const attackCharacter = (__x: number, __y: number): void => {
+const attackCharacter = (x: number, y: number): void => {
+    const attacker = fieldSelected.content as ICharactersUtils
+    const range = attacker.takeRange()
+    const unitCords = fieldSelectedCord
+    let newX = unitCords[0]
+    let newY = unitCords[1]
+    if (Math.abs(x- unitCords[0]) > range){
+        newX = x > unitCords[0] ? x - range : x + range
+    }
+    if (Math.abs(y- unitCords[1]) > range){
+        newY = y > unitCords[1] ? y - range : y + range
+    }
+    console.log(newX, newY, x, y)
+    attacker.moveUnit(newX, newY, () => attacker.attackUnit(x, y))
 
+    // jednostka z pola selectedField atakuje jednostkę na polu x,y
 }
 
 export const handleRight: ISubscribe =  {
@@ -162,21 +94,24 @@ export const handleRight: ISubscribe =  {
         switch (character){
             case myRange:
             case myMelee:
-                moveCharacter(x, y)
+                const type = GameBoard[x][y].type
+                if (type === enemyRange || type === enemyMelee || type === enemyBase){
+                    console.log("?")
+                    attackCharacter(x, y)
+                }else{
+                    moveCharacter(x, y)
+                }
                 break
             case myBase:
                 myBaseObject.base.fieldToSpawnTroops = [x,y]
                 break
             case enemyRange:
             case enemyBase:
-            case enemyMelee :
-                attackCharacter(x, y)
+            case enemyMelee:
+
                 break
 
         }
-
-
-
     }
 }
 
@@ -198,6 +133,29 @@ export const handleSpawn: ISubscribe = {
 }
 
 
+export const handleAttackData : ISubscribe = {
+    Handle(notification: object): void {
+        const notify = notification as AttackEventObject
+        const x = notify.cord[0]
+        const y = notify.cord[1]
+        const unit = GameBoard[x][y].content as ICharactersUtils
+        console.log(`unit := ${unit}`)
+        if (!unit.takeDamage(notify.damage)){ // czy jednostka umarła
+
+            unitMap.delete(GameBoard[x][y]) // usuwamy jednostkę z mapy
+            if (GameBoard[x][y].type === myBase){
+                // koniec gry
+                EventAggregatorClass.instance.notify(EventTypeEnum.gameLost, new EndGame(playerNumber))
+                return
+            }
+            GameBoard[x][y] = GroundObject // jeżeli jednostka umarła, zastępujemy ją piaskiem
+        }
+        EventAggregatorClass.instance.notify(EventTypeEnum.boardChanged, new boardChangedEventObject(Date.now(), true))
+        // tutaj chcemy zaktualizować planszę
+        // na razie niech to będzie p
+    }
+
+}
 
 
 

@@ -1,6 +1,6 @@
 import field, {fieldType, fieldTypeEnum} from "./Field.ts";
 import EventAggregatorClass, {EventTypeEnum} from "../EventAggregator/EventAggregatorClass.ts";
-import {handleLeft, handleNewBoardReceived, handleRight, handleSpawn} from "./eventHandlers.ts";
+import {handleAttackData, handleLeft, handleNewBoardReceived, handleRight, handleSpawn} from "./eventHandlers.ts";
 import {playerNumber} from "../components/mainSite.tsx";
 import {EWarrior, MWarrior} from "./content/characters/mWarrior.ts";
 import {ERanger, MRanger} from "./content/characters/mRanger.ts";
@@ -167,6 +167,7 @@ export default class Game{
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.CanvasLeftClick, handleLeft)
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.characterSpawned, handleSpawn)
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.boardReceived, handleNewBoardReceived)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.AttackEventReceived, handleAttackData)
     } // mamy plansze
 
     public destructor(){
@@ -174,6 +175,7 @@ export default class Game{
         EventAggregatorClass.instance.unSubscribe(EventTypeEnum.CanvasLeftClick, handleLeft)
         EventAggregatorClass.instance.unSubscribe(EventTypeEnum.characterSpawned, handleSpawn)
         EventAggregatorClass.instance.unSubscribe(EventTypeEnum.boardReceived, handleNewBoardReceived)
+        EventAggregatorClass.instance.unSubscribe(EventTypeEnum.AttackEventReceived, handleAttackData)
         this.gameBoard = Array.from(
             { length: gameSize[0] },
             () => Array.from(

@@ -1,11 +1,10 @@
-import {fieldTypeEnum} from "../../Field.ts";
 
 export interface ICharactersUtils{
     health: number
-    speed: number
-    isMoving: boolean
-    attack: number
-    range: number
-    type: fieldTypeEnum
-    stopAction: boolean
+    moveUnit(x: number, y: number, callback?: ()=>void): void
+    attackUnit(x: number, y: number, callback?: ()=>void): void
+    takeDamage(damage: number): boolean
+    takeStatAttack(): number
+    takeRange(): number
+    takeStatHealth(): number
 }

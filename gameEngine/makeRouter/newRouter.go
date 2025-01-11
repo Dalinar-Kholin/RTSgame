@@ -65,6 +65,7 @@ func NewRouter() *gin.Engine {
 	gameEndpoint := newGameEndpoints.GameEndpoints{
 		Svc: svc,
 	}
+	// connectionHub.Hub.Svc = svc
 
 	var socketPool atomic.Int32
 	socketPool.Store(0)

@@ -13,6 +13,7 @@ export const FrameTypeEnum =  {
     serverMessage: 4,
     startGame: 5,
     boardFrame: 6,
+    endGame: 7
 }
 
 export type FrameTypeEnumType = (typeof FrameTypeEnum)[keyof typeof FrameTypeEnum]

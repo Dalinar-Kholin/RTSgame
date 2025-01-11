@@ -11,6 +11,7 @@ import field, {fieldType} from "../../Game/Field.ts";
 import {eHeadBase, HeadBase, mHeadBase} from "../../Game/content/buildings/headBase.ts";
 import {playerNumber} from "../mainSite.tsx";
 import boardChangedEventObject from "../../EventAggregator/NotificationType/boardChangeEventObject.ts";
+import {EndGame} from "../../communicationType/frames/EndGame.ts";
 
 
 interface IGameWaitingRoom{
@@ -25,12 +26,12 @@ export default function GameWaitingRoom({gameId}:IGameWaitingRoom ){
 
 
     const state = location.state;
-    console.log(`state := ${state.isMade}`)
 
     const navigate = useNavigate()
     const [isEnemyReady, setIsEnemyReady] = useState(false)
     const [isPlayerReady, setIsPlayerReady] = useState(false)
     const [isAnotherPlayerInLobby, setIsAnotherPlayerInLobby] = useState(!state?.isMade)
+    const [winner, setWinner] = useState<number | null>(null)
 
     useEffect(() => {
         // register message sender notify for sending message to backend
@@ -53,12 +54,22 @@ export default function GameWaitingRoom({gameId}:IGameWaitingRoom ){
             }
         }
 
+
+        let gameEnd: ISubscribe = {
+            Handle(notification: object): void {
+                const notif = notification as EndGame
+                setWinner(notif.winner)
+            }
+        }
+
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.startGameReceived, enemyReady)
         EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.ServerMessageReceived, PlayerInLobby)
+        EventAggregatorClass.instance.registerSubscriber(EventTypeEnum.endGame, gameEnd)
 
         return ()=>{
             EventAggregatorClass.instance.unSubscribe(EventTypeEnum.startGameReceived, enemyReady)
             EventAggregatorClass.instance.unSubscribe(EventTypeEnum.ServerMessageReceived, PlayerInLobby)
+            EventAggregatorClass.instance.unSubscribe(EventTypeEnum.endGame, gameEnd)
         }
     }, []);
 
@@ -73,13 +84,15 @@ export default function GameWaitingRoom({gameId}:IGameWaitingRoom ){
         myBaseObject.base = newField.content as HeadBase
         myBaseObject.cord = [baseCords,baseCords]
         unitMap.set(newField, [baseCords,baseCords])
-        /*GameBoard[baseCords + 1][baseCords] = newField
-        GameBoard[baseCords +2][baseCords] = newField
-        GameBoard[baseCords][baseCords +1] = newField
-        GameBoard[baseCords + 1][baseCords +1] = newField
-        GameBoard[baseCords + 2 ][baseCords +1] = newField*/
         EventAggregatorClass.instance.notify(EventTypeEnum.boardChanged, new boardChangedEventObject(Date.now()))
         Game.instance.startAnimating()
+    }
+
+    if (winner!== null){
+        return <Box>
+            {winner !== playerNumber ? "You won" : "You lost"}
+            <Button onClick={()=>{navigate("/")}}>go to menu</Button>
+        </Box>
     }
 
     return(

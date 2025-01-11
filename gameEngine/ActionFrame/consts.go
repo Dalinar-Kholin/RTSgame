@@ -10,6 +10,7 @@ const (
 	ServerMessage = Action(4)
 	StartGame     = Action(5)
 	NewBoard      = Action(6)
+	EndGame       = Action(7)
 )
 
 type IActionRequest interface {

@@ -12,6 +12,10 @@ func RequestFactory(data []byte) IActionRequest {
 		return NewStartGameRequest()
 	case NewBoard:
 		return NewBoardFromUintArr(data)
+	case Attack:
+		return AttackFromUintArr(data)
+	case EndGame:
+		return EndGameFromUintArr(data)
 	default:
 		return NilFromUintArr()
 	}

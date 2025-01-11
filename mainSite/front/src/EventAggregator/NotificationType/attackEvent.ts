@@ -1,9 +1,10 @@
-export default class AttackEventObject{
-    attackerId:number
-    victimId: number
+import {cord} from "../../Game/Game.ts";
 
-    constructor(aId : number, vId: number) {
-        this.attackerId = aId
-        this.victimId = vId
+export default class AttackEventObject{
+    damage: number
+    cord : cord
+    constructor(dmg : number, crd: cord) {
+        this.damage = dmg
+        this.cord = crd
     }
 }

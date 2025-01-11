@@ -5,17 +5,20 @@
 export const EventTypeEnum = { // wszystkie możliwe typy powiadomień
     MessageReceivedEvent: 0,
     MessageSentEvent: 1,
-    AttackEvent: 2,
     ServerMessageReceived: 3,
     CanvasRightClick: 4,
     CanvasLeftClick: 5,
     startGameReceived: 6,
-    startGameSent: 7, 
+    startGameSent: 7,
     timerEvent: 8,
     changeCharacter: 9,
     boardChanged: 10,
     boardReceived: 11,
     characterSpawned: 12,
+    AttackEventSend: 2,
+    AttackEventReceived: 13,
+    endGame: 14,
+    gameLost: 15
 }
 
 
