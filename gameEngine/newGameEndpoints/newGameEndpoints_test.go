@@ -35,7 +35,7 @@ func userOne(t *testing.T, syc *sync.WaitGroup, messageOne, messageTwo string, g
 
 	for *gameId == 0 {
 	}
-	resp, err := http.Get(fmt.Sprintf("http://game.essa.com:81/joinGames?gameId=%d&playerId=%d", *gameId, playerId))
+	resp, err := http.Get(fmt.Sprintf("http://game.essafromkholin.click:80/joinGames?gameId=%d&playerId=%d", *gameId, playerId))
 	assert.Equal(t, err, nil)
 	assert.Equal(t, resp.StatusCode, 200)
 
@@ -61,11 +61,11 @@ func userOne(t *testing.T, syc *sync.WaitGroup, messageOne, messageTwo string, g
 
 func userTwo(t *testing.T, syc *sync.WaitGroup, messageOne, messageTwo string, gameId *int32) {
 	playerId := uuid.New().ID()
-	res, err := http.Get("http://game.essa.com:81/ping")
+	res, err := http.Get("http://game.essafromkholin.click:80/ping")
 	assert.Equal(t, err, nil)
 	assert.Equal(t, res.StatusCode, 200)
 	c, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf(
-		"ws://game.essa.com:81/commSocket?id=%d", playerId),
+		"ws://game.essafromkholin.click:80/commSocket?id=%d", playerId),
 		nil)
 
 	assert.Equal(t, err, nil)
@@ -75,7 +75,7 @@ func userTwo(t *testing.T, syc *sync.WaitGroup, messageOne, messageTwo string, g
 	}()
 
 	var gameResult newGameEndpoints.NewGame
-	resp, err := http.Get(fmt.Sprintf("http://game.essa.com:81/newGame?playerId=%d", playerId))
+	resp, err := http.Get(fmt.Sprintf("http://game.essafromkholin.click:80/newGame?playerId=%d", playerId))
 	assert.Equal(t, err, nil)
 	assert.Equal(t, resp.StatusCode, 200)
 	if err = json.NewDecoder(resp.Body).Decode(&gameResult); err != nil {
@@ -103,7 +103,7 @@ func userTwo(t *testing.T, syc *sync.WaitGroup, messageOne, messageTwo string, g
 func controlFunc(t *testing.T) {
 	playerId := 420
 	c, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf(
-		"ws://game.essa.com:81/commSocket?id=%d", playerId), nil)
+		"ws://game.essafromkholin.click:80/commSocket?id=%d", playerId), nil)
 	assert.Equal(t, err, nil)
 	/*err = c.SetReadDeadline(time.Now().Add(10 * time.Second))
 	assert.Equal(t, err, nil)*/

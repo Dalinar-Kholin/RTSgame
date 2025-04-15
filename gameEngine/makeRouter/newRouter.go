@@ -45,7 +45,7 @@ var upgrader = websocket.Upgrader{
 func NewRouter() *gin.Engine {
 	r := gin.Default()
 	r.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "http://essa.com")
+		c.Header("Access-Control-Allow-Origin", "http://essafromkholin.click")
 	})
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {

@@ -18,5 +18,5 @@ func main() {
 		c.File("./front/dist/index.html")
 	})
 
-	r.Run("essa.com:80")
+	r.Run(":8080")
 }

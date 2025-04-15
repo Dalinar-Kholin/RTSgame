@@ -1,1 +1,1 @@
-export const gameServerURL = "game.essa.com:81"
+export const gameServerURL = "game.essafromkholin.click:80"

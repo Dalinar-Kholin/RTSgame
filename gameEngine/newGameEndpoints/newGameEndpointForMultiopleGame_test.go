@@ -49,7 +49,7 @@ func TestNewGameForMultipleGame(t *testing.T) {
 	go func(wg *sync.WaitGroup) {
 		r := makeRouter.NewRouter()
 		wg.Done()
-		r.Run("game.essa.com:81")
+		r.Run("127.0.0.1:80")
 	}(&wgRouter)
 
 	wgRouter.Wait()

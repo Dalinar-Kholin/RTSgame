@@ -12,5 +12,5 @@ func main() {
 	go func() {
 		connectionHub.Hub.IterpretConnections()
 	}() // zarządznie webSocketami
-	r.Run("game.essa.com:81")
+	r.Run(":80")
 }

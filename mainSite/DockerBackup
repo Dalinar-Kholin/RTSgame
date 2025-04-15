@@ -1,0 +1,50 @@
+# Wybór odpowiedniego obrazu bazowego dla Go i Node.js
+FROM golang:latest as build-go
+
+# Ustawienie katalogu roboczego
+WORKDIR /application
+
+# Kopiowanie zależności Go
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Kopiowanie aplikacji Go i budowanie serwera
+COPY . .
+RUN go build -o ./server .
+
+# Etap 2: Node.js build
+FROM node:latest as build-node
+
+# Ustawienie katalogu roboczego
+WORKDIR /application
+
+# Kopiowanie plików aplikacji
+COPY ./front/ ./
+RUN ls -lar
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+# Etap 3: Finalny obraz
+FROM debian:latest
+
+LABEL authors="dalinarkholin"
+
+# Instalacja wymaganych narzędzi runtime
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Ustawienie katalogu roboczego
+WORKDIR /application
+
+# Kopiowanie zbudowanego serwera i aplikacji
+COPY --from=build-go /application/server /application/server
+COPY --from=build-node /application/dist/ /application/front/dist/
+
+# Eksponowanie portu 80
+EXPOSE 80
+
+# Ustawienie domyślnego polecenia
+CMD ["./server"]
